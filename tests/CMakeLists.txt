@@ -35,7 +35,8 @@ add_executable(
     unit/libclang_info_test.cpp
     unit/loc_test.cpp
     unit/paths_test.cpp
-    unit/source_files_test.cpp)
+    unit/source_files_test.cpp
+    unit/summary_test.cpp)
 target_link_libraries(tezcatl_tests PRIVATE tezcatl::core Catch2::Catch2WithMain)
 target_compile_definitions(
     tezcatl_tests PRIVATE TEZCATL_FIXTURES_DIR="${TEZCATL_FIXTURES_DIR}"

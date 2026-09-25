@@ -6,6 +6,7 @@ add_library(
     cli/loc_command.cpp
     metrics/complexity.cpp
     metrics/loc.cpp
+    metrics/summary.cpp
     parse/command_line.cpp
     parse/compilation_database.cpp
     parse/functions.cpp
