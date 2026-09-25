@@ -33,6 +33,7 @@ add_library(
     report/csv.cpp
     report/include_graph.cpp
     report/json_report.cpp
+    report/markdown_report.cpp
     report/module_summary.cpp
     report/naming.cpp
     report/tables.cpp

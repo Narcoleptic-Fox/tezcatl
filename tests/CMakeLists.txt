@@ -44,6 +44,7 @@ add_executable(
     unit/json_report_test.cpp
     unit/libclang_info_test.cpp
     unit/loc_test.cpp
+    unit/markdown_report_test.cpp
     unit/module_summary_test.cpp
     unit/modules_test.cpp
     unit/path_map_test.cpp
