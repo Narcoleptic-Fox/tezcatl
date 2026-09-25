@@ -30,9 +30,11 @@ void report_errors(const parse::ParsedUnit& parsed, std::ostream& err) {
 
 Project::Project(const ProjectOptions& options)
     : options_(options), root_(fs::absolute(options.root).lexically_normal()),
-      build_(fs::absolute(options.build_directory).lexically_normal()),
+      build_(options.build_directory.empty()
+                 ? fs::path{}
+                 : fs::absolute(options.build_directory).lexically_normal()),
       in_project_([this](const fs::path& file) {
-          return scan::is_within(file, root_) && !scan::is_within(file, build_);
+          return scan::is_within(file, root_) && (build_.empty() || !scan::is_within(file, build_));
       }),
       modules_(options.module_map.empty() ? config::ModuleMap{}
                                           : config::ModuleMap::load(options.module_map)) {}

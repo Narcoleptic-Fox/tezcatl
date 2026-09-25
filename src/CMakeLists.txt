@@ -2,6 +2,7 @@ configure_file(tezcatl/version.hpp.in "${PROJECT_BINARY_DIR}/generated/tezcatl/v
 
 add_library(
     tezcatl_core STATIC
+    cli/coverage_command.cpp
     cli/docs_command.cpp
     cli/functions_command.cpp
     cli/includes_command.cpp

@@ -274,6 +274,46 @@ Limits: a comment is attached by position, not by what it says, so a licence blo
 directive in between, as in most licence headers followed by an include guard, prevents that).
 Whether a comment is *good* documentation is for a reviewer, not a metric.
 
+## Test coverage (imported)
+
+Tezcatl does not run tests or instrument code. `tezcatl coverage` reads coverage that gcc, clang
+or gcovr already measured, in any of three formats, recognised by their content:
+
+| Format | Produced by | Notes |
+|---|---|---|
+| lcov tracefile (`.info`) | `lcov`, `gcovr --lcov`, `llvm-cov export -format=lcov` | lcov 1.x and 2.x records |
+| gcov JSON | `gcov -b --json-format` (gcc 9+) | uncompressed; one document, or one per line with `--stdout`. Without `-b` there is no branch data |
+| llvm-cov JSON | `llvm-cov export -format=text` | llvm-cov's own totals per file are used as they are |
+
+**Merging.** Every input is merged before counting: a line, branch or function reported more than
+once (by several test binaries, several translation units, or several instances of a template)
+counts **once**, with the sum of its hits, and is covered if that sum is above 0.
+
+- A **line** is one source line: a template line run by one instance and not another is covered.
+  This is gcovr's `--merge-lines` and lcov's convention. gcovr 8's *default* counts a line once
+  per template instance instead, which gives larger totals for the same data.
+- A **branch** is one outcome of a condition, identified by its line and its position among that
+  line's branches, so the instances of a template line up. A branch whose condition never ran
+  (lcov's `-`) is not covered.
+- A **function** is one name: two instances of a template are two functions, as gcov and gcovr
+  count them.
+- llvm-cov measures differently (by regions; a template is one function), so its numbers for the
+  same program differ from gcov's. They are reported as llvm-cov computed them and not mixed
+  with line data: llvm-cov totals and lcov or gcov data for the same file is an error, and so is
+  one file in two llvm-cov exports (merge the profiles with `llvm-profdata` and export once).
+
+**Files and modules.** Recorded paths are resolved (gcov's are relative to the directory it ran
+in, lcov's to the tracefile), then moved by `--path-map FROM=TO` when the data was recorded on
+another machine or in another directory, then attributed to modules like everything else. Files
+outside `--root` are counted and left out; if none is under the root, the run fails and suggests a
+path map. Percentages are left **empty** where there is nothing to cover, since a file with no
+branches has neither 0% nor 100% branch coverage.
+
+**Checked against the tools.** On a small program covered with gcc 15.2, gcovr 8.6 and LLVM 22.1.3
+(the fixture in `tests/fixtures/coverage`), Tezcatl reproduces gcovr `--merge-lines` exactly from
+both the gcov JSON and the lcov file (17 lines, 14 covered; 8 branches, 6; 5 functions, 4, and
+the same per file), and `llvm-cov report` from the llvm-cov JSON (24, 18; 10, 6; 4, 3).
+
 ## Include dependencies
 
 `tezcatl includes` builds the `#include` graph at file level. Each directive is resolved by the

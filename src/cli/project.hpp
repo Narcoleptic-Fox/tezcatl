@@ -15,7 +15,8 @@ namespace tezcatl::cli {
 
 /// What every command that parses a project needs to know.
 struct ProjectOptions {
-    std::filesystem::path build_directory;    ///< holds compile_commands.json
+    std::filesystem::path build_directory;    ///< holds compile_commands.json; may be empty
+                                              ///< for commands that parse nothing
     std::filesystem::path root;               ///< only files under here are the project's
     std::filesystem::path resource_directory; ///< clang's built-in headers
     std::filesystem::path module_map;         ///< empty: every file is unassigned
@@ -50,8 +51,8 @@ public:
     Project(Project&&) = delete;
     Project& operator=(Project&&) = delete;
 
-    /// True for files under the root and not under the build directory
-    /// (fetched dependencies, generated code).
+    /// True for files under the root and not under the build directory, if
+    /// there is one (fetched dependencies, generated code).
     [[nodiscard]] const parse::FileFilter& in_project() const noexcept { return in_project_; }
     /// `file` relative to the root, with '/' separators.
     [[nodiscard]] std::string relative(const std::filesystem::path& file) const;

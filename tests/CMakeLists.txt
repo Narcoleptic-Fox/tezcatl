@@ -43,8 +43,8 @@ add_executable(
     unit/libclang_info_test.cpp
     unit/loc_test.cpp
     unit/modules_test.cpp
-    unit/paths_test.cpp
     unit/path_map_test.cpp
+    unit/paths_test.cpp
     unit/source_files_test.cpp
     unit/summary_test.cpp)
 target_link_libraries(tezcatl_tests PRIVATE tezcatl::core Catch2::Catch2WithMain)
@@ -194,6 +194,66 @@ set_tests_properties(
         PASS_REGULAR_EXPRESSION
         "\ninclude/api\\.hpp,13,5,function,\"subtract\\(int, int\\)\",cpp,yes,plain\n.*\ninclude/api\\.hpp,61,25,function,identity\\(T\\),cpp,no,none\n"
 )
+
+# Coverage import from tests/fixtures/coverage/data, recorded under
+# /coverage-fixture. Expected values are the tools' own, not Tezcatl's (see the
+# fixture's README): gcovr --merge-lines per file, and llvm-cov report.
+set(COVERAGE_DIR "${TEZCATL_FIXTURES_DIR}/coverage")
+set(COVERAGE_ARGS --root "${COVERAGE_DIR}" --path-map "/coverage-fixture=${COVERAGE_DIR}")
+add_test(NAME cli.coverage.lcov_per_file COMMAND tezcatl coverage "${COVERAGE_DIR}/data/calc.info"
+                                                  ${COVERAGE_ARGS})
+# Run from the project root, as a user would: the command has no build
+# directory, and must not treat the current directory as one.
+set_tests_properties(
+    cli.coverage.lcov_per_file
+    PROPERTIES
+        WORKING_DIRECTORY "${COVERAGE_DIR}"
+        PASS_REGULAR_EXPRESSION
+        "\nsrc/calc\\.cpp,\\(unassigned\\),8,5,4,3,2,1\nsrc/calc\\.hpp,\\(unassigned\\),4,4,4,3,2,2\nsrc/main\\.cpp,\\(unassigned\\),5,5,0,0,1,1\n"
+)
+
+# By module: calc is calc.cpp + calc.hpp, 12 lines (9), 8 branches (6), 4
+# functions (3), all 75.0%; main has no branches, so no branch percentage.
+add_test(NAME cli.coverage.gcov_summary
+         COMMAND tezcatl coverage "${COVERAGE_DIR}/data/calc.gcov.json" ${COVERAGE_ARGS} --modules
+                 "${COVERAGE_DIR}/modules.txt" --summary)
+set_tests_properties(
+    cli.coverage.gcov_summary
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION
+        "\ncalc,2,12,9,75\\.0,8,6,75\\.0,4,3,75\\.0\nmain,1,5,5,100\\.0,0,0,,1,1,100\\.0\nTOTAL,3,17,14,82\\.4,8,6,75\\.0,5,4,80\\.0\n"
+)
+
+add_test(NAME cli.coverage.llvm_summary
+         COMMAND tezcatl coverage "${COVERAGE_DIR}/data/calc.llvm.json" ${COVERAGE_ARGS} --summary)
+set_tests_properties(
+    cli.coverage.llvm_summary PROPERTIES PASS_REGULAR_EXPRESSION
+                                         "\nTOTAL,3,24,18,75\\.0,10,6,60\\.0,4,3,75\\.0\n")
+
+# Without the mapping every recorded file lies outside the root: an error, not
+# an empty report.
+add_test(NAME cli.coverage.nothing_under_root_fails
+         COMMAND tezcatl coverage "${COVERAGE_DIR}/data/calc.info" --root "${COVERAGE_DIR}")
+set_tests_properties(cli.coverage.nothing_under_root_fails PROPERTIES WILL_FAIL TRUE)
+# WILL_FAIL passes on any failure, a crash included; this checks it is this one.
+add_test(NAME cli.coverage.nothing_under_root_says_why
+         COMMAND tezcatl coverage "${COVERAGE_DIR}/data/calc.info" --root "${COVERAGE_DIR}")
+set_tests_properties(
+    cli.coverage.nothing_under_root_says_why
+    PROPERTIES PASS_REGULAR_EXPRESSION
+               "0 source files under the root, 3 outside it\n.*map its paths with --path-map")
+
+# llvm-cov's totals and lcov's lines for the same files would count them twice.
+add_test(NAME cli.coverage.mixed_llvm_and_lcov_fails
+         COMMAND tezcatl coverage "${COVERAGE_DIR}/data/calc.llvm.json"
+                 "${COVERAGE_DIR}/data/calc.info" ${COVERAGE_ARGS})
+set_tests_properties(cli.coverage.mixed_llvm_and_lcov_fails PROPERTIES WILL_FAIL TRUE)
+add_test(NAME cli.coverage.mixed_llvm_and_lcov_says_why
+         COMMAND tezcatl coverage "${COVERAGE_DIR}/data/calc.llvm.json"
+                 "${COVERAGE_DIR}/data/calc.info" ${COVERAGE_ARGS})
+set_tests_properties(
+    cli.coverage.mixed_llvm_and_lcov_says_why
+    PROPERTIES PASS_REGULAR_EXPRESSION "calc\\.info:[0-9]+: line data for .*also has llvm-cov totals")
 
 # The include graph of tests/fixtures/includes, every table hand computed from
 # its #include lines (listed in unit/includes_test.cpp). The module map puts

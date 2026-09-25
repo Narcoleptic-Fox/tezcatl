@@ -8,8 +8,8 @@ cycles and fan-in/fan-out. It emits machine-readable data alongside a human-read
 It is built to produce the baseline a code review of a C or C++ codebase starts from.
 
 > **Status: under construction.** Implemented so far: lines of code, cyclomatic complexity,
-> Halstead measures, documentation coverage, and the include dependency graph. Every definition
-> is in [docs/metrics.md](docs/metrics.md).
+> Halstead measures, documentation coverage, imported test coverage, and the include dependency
+> graph. Every definition is in [docs/metrics.md](docs/metrics.md).
 
 ## Usage
 
@@ -22,6 +22,10 @@ tezcatl loc --lines src/main.cpp
 # project's own flags from compile_commands.json
 tezcatl functions -p build --root . --modules modules.txt
 tezcatl functions -p build --root . --modules modules.txt --summary   # per module
+
+# Test coverage measured by gcc/clang, per file and module (lcov, gcov JSON, llvm-cov JSON)
+tezcatl coverage build/coverage.info --root . --modules modules.txt --summary
+tezcatl coverage ci/coverage.info --root . --path-map /ci/work=.   # recorded elsewhere
 
 # Documentation coverage of the public API declared in headers
 tezcatl docs -p build --root . --modules modules.txt --summary

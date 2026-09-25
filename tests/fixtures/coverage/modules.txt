@@ -1,0 +1,2 @@
+main = src/main.cpp
+calc = src/calc.*

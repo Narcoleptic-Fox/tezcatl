@@ -1,3 +1,4 @@
+#include "cli/coverage_command.hpp"
 #include "cli/docs_command.hpp"
 #include "cli/functions_command.hpp"
 #include "cli/includes_command.hpp"
@@ -89,6 +90,30 @@ int run(int argc, char** argv) {
     functions->add_flag("--summary", functions_options.summary,
                         "One row per module (count, mean, median, p90, max, over thresholds)");
 
+    tezcatl::cli::CoverageOptions coverage_options{.inputs = {},
+                                                   .root = std::filesystem::current_path(),
+                                                   .module_map = {},
+                                                   .path_maps = {},
+                                                   .summary = false};
+    std::vector<std::string> path_map_texts;
+    CLI::App* coverage = app.add_subcommand(
+        "coverage", "Import test coverage (lcov, gcov JSON, llvm-cov JSON) per file and module.");
+    coverage->add_option("data", coverage_options.inputs, "Coverage files, in any mix of formats")
+        ->required()
+        ->check(CLI::ExistingFile);
+    coverage
+        ->add_option("--root", coverage_options.root,
+                     "Only files under this directory are measured")
+        ->capture_default_str();
+    coverage
+        ->add_option("--modules", coverage_options.module_map,
+                     "Module map file, one 'MODULE = GLOB' rule per line (globs relative to root)")
+        ->check(CLI::ExistingFile);
+    coverage->add_option("--path-map", path_map_texts,
+                         "FROM=TO: source paths recorded under FROM are found under TO");
+    coverage->add_flag("--summary", coverage_options.summary,
+                       "One row per module, with line, branch and function percentages");
+
     tezcatl::cli::DocsOptions docs_options{.project = default_project_options(), .summary = false};
     CLI::App* docs = app.add_subcommand(
         "docs", "Documentation coverage of the public API declared in the project's headers.");
@@ -123,6 +148,12 @@ int run(int argc, char** argv) {
     }
     if (functions->parsed()) {
         return tezcatl::cli::run_functions(functions_options, {.out = std::cout, .err = std::cerr});
+    }
+    if (coverage->parsed()) {
+        for (const std::string& text : path_map_texts) {
+            coverage_options.path_maps.push_back(tezcatl::coverage::parse_path_mapping(text));
+        }
+        return tezcatl::cli::run_coverage(coverage_options, {.out = std::cout, .err = std::cerr});
     }
     if (docs->parsed()) {
         return tezcatl::cli::run_docs(docs_options, {.out = std::cout, .err = std::cerr});
