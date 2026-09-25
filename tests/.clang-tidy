@@ -1,0 +1,13 @@
+---
+# The project's checks, with one exception for test code, justified here as
+# every disabled check is.
+#
+# -readability-magic-numbers, -cppcoreguidelines-avoid-magic-numbers
+#     A test's data and expected values are literal by nature: they are the
+#     hand-computed numbers the test checks against, written next to the
+#     working that produced them. Naming each one would move it away from
+#     that working and make the test harder to check by hand.
+InheritParentConfig: true
+Checks: >
+  -readability-magic-numbers,
+  -cppcoreguidelines-avoid-magic-numbers
