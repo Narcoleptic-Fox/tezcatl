@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["clang++", "-std=c++20", "-iprefix", "include/", "-iwithprefixbefore", ".", "-c", "a.cpp"],
+    "file": "a.cpp"
+  }
+]

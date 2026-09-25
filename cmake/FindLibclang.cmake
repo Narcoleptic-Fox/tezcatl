@@ -5,8 +5,8 @@
 # e.g. "C:/Program Files/LLVM" on Windows or "/usr/lib/llvm-18" on Ubuntu.
 #
 # Sets Libclang_FOUND, Libclang_INCLUDE_DIR, Libclang_LIBRARY, Libclang_VERSION
-# (the C API version from Index.h, not the LLVM release), and on Windows
-# Libclang_DLL.
+# (the C API version from Index.h, not the LLVM release), Libclang_RESOURCE_DIR
+# (clang's built-in headers), and on Windows Libclang_DLL.
 
 set(_libclang_hints ${LLVM_ROOT} $ENV{LLVM_ROOT})
 if(WIN32)
@@ -42,6 +42,21 @@ if(Libclang_INCLUDE_DIR AND EXISTS "${Libclang_INCLUDE_DIR}/clang-c/Index.h")
     string(REGEX REPLACE ".*MAJOR ([0-9]+).*" "\\1" _libclang_major "${_libclang_version_lines}")
     string(REGEX REPLACE ".*MINOR ([0-9]+).*" "\\1" _libclang_minor "${_libclang_version_lines}")
     set(Libclang_VERSION "${_libclang_major}.${_libclang_minor}")
+endif()
+
+# clang's resource directory (stddef.h and the other built-in headers) sits at
+# <libdir>/clang/<major> on both Windows and Linux installs. libclang finds it
+# relative to its own shared library, which fails once the DLL is copied next
+# to an executable, so Tezcatl passes it explicitly.
+if(Libclang_LIBRARY)
+    get_filename_component(_libclang_libdir "${Libclang_LIBRARY}" DIRECTORY)
+    file(GLOB _libclang_resource_candidates LIST_DIRECTORIES true "${_libclang_libdir}/clang/*")
+    foreach(_candidate IN LISTS _libclang_resource_candidates)
+        if(EXISTS "${_candidate}/include/stddef.h")
+            set(Libclang_RESOURCE_DIR "${_candidate}")
+        endif()
+    endforeach()
+    list(APPEND _libclang_required Libclang_RESOURCE_DIR)
 endif()
 
 include(FindPackageHandleStandardArgs)
