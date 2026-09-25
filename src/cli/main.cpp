@@ -1,4 +1,5 @@
 #include "cli/functions_command.hpp"
+#include "cli/includes_command.hpp"
 #include "cli/loc_command.hpp"
 #include "parse/libclang_info.hpp"
 #include "parse/translation_unit.hpp"
@@ -11,6 +12,7 @@
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -86,6 +88,22 @@ int run(int argc, char** argv) {
     functions->add_flag("--summary", functions_options.summary,
                         "One row per module (count, mean, median, p90, max, over thresholds)");
 
+    tezcatl::cli::IncludesOptions includes_options{.project = default_project_options(),
+                                                   .output = tezcatl::cli::IncludesOutput::edges};
+    CLI::App* includes = app.add_subcommand(
+        "includes", "The #include graph: edges, fan-in/fan-out, cycles and module coupling.");
+    add_project_options(*includes, includes_options.project);
+    const std::map<std::string, tezcatl::cli::IncludesOutput> outputs{
+        {"edges", tezcatl::cli::IncludesOutput::edges},
+        {"files", tezcatl::cli::IncludesOutput::files},
+        {"modules", tezcatl::cli::IncludesOutput::modules},
+        {"cycles", tezcatl::cli::IncludesOutput::cycles},
+        {"coupling", tezcatl::cli::IncludesOutput::coupling},
+        {"dot", tezcatl::cli::IncludesOutput::dot}};
+    includes->add_option("--output", includes_options.output, "Table to write")
+        ->transform(CLI::CheckedTransformer(outputs, CLI::ignore_case))
+        ->default_str("edges");
+
     CLI11_PARSE(app, argc, argv);
 
     if (loc->parsed()) {
@@ -97,6 +115,9 @@ int run(int argc, char** argv) {
     }
     if (functions->parsed()) {
         return tezcatl::cli::run_functions(functions_options, {.out = std::cout, .err = std::cerr});
+    }
+    if (includes->parsed()) {
+        return tezcatl::cli::run_includes(includes_options, {.out = std::cout, .err = std::cerr});
     }
     return EXIT_SUCCESS;
 }

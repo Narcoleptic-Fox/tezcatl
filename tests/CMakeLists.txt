@@ -143,3 +143,56 @@ add_test(NAME cli.functions.rejects_inverted_thresholds
          COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/complexity" --flag-over 20
                  --high-over 10)
 set_tests_properties(cli.functions.rejects_inverted_thresholds PROPERTIES WILL_FAIL TRUE)
+
+# The include graph of tests/fixtures/includes, every table hand computed from
+# its #include lines (listed in unit/includes_test.cpp). The module map puts
+# ring/ and shared/ in modules of those names; the rest is unassigned.
+set(INCLUDES_ARGS -p "${TEZCATL_FIXTURE_DBS}/includes" --root "${TEZCATL_FIXTURES_DIR}/includes"
+                  --modules "${TEZCATL_FIXTURES_DIR}/includes/modules.txt")
+
+# Exactly one file cycle, the 3-file ring, and one module cycle that no file
+# cycle crosses: ring/c.h -> shared/common.h and shared/x.h -> ring/a.h.
+add_test(NAME cli.includes.cycles COMMAND tezcatl includes ${INCLUDES_ARGS} --output cycles)
+set_tests_properties(
+    cli.includes.cycles
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION
+        "^level,cycle,size,members\nfile,1,3,ring/a\\.h[;]ring/b\\.h[;]ring/c\\.h\nmodule,1,2,ring[;]shared\ntezcatl: parsed 3 translation units, 0 with errors[;] 10 files, 12 include edges, 1 file cycles, 1 module cycles\n$"
+)
+
+add_test(NAME cli.includes.files COMMAND tezcatl includes ${INCLUDES_ARGS} --output files)
+set_tests_properties(
+    cli.includes.files
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION
+        "^file,module,fan_in,fan_out,cycle\ninclude/lib/util\\.h,\\(unassigned\\),1,0,\nlone\\.cpp,\\(unassigned\\),0,0,\nmain\\.cpp,\\(unassigned\\),0,4,\nother\\.cpp,\\(unassigned\\),0,1,\nring/a\\.h,ring,3,1,1\nring/b\\.h,ring,1,1,1\nring/c\\.h,ring,1,2,1\nshared/common\\.h,shared,3,0,\nshared/x\\.h,shared,1,2,\nshared/y\\.h,shared,2,1,\n"
+)
+
+add_test(NAME cli.includes.modules COMMAND tezcatl includes ${INCLUDES_ARGS} --output modules)
+set_tests_properties(
+    cli.includes.modules
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION
+        "^module,files,fan_in,fan_out,cycle\n\\(unassigned\\),4,0,2,\nring,3,2,1,1\nshared,3,2,1,1\n"
+)
+
+add_test(NAME cli.includes.coupling COMMAND tezcatl includes ${INCLUDES_ARGS} --output coupling)
+set_tests_properties(
+    cli.includes.coupling
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION
+        "^from_module,to_module,edges\n\\(unassigned\\),\\(unassigned\\),1\n\\(unassigned\\),ring,1\n\\(unassigned\\),shared,3\nring,ring,3\nring,shared,1\nshared,ring,1\nshared,shared,2\n"
+)
+
+# Edges inside a cycle are drawn red; the others are not.
+add_test(NAME cli.includes.dot COMMAND tezcatl includes ${INCLUDES_ARGS} --output dot)
+set_tests_properties(
+    cli.includes.dot
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION
+        "subgraph cluster_1 {\n    label=\"ring\"[;]\n    \"ring/a\\.h\"[;]\n    \"ring/b\\.h\"[;]\n    \"ring/c\\.h\"[;]\n  }\n.*\"ring/c\\.h\" -> \"ring/a\\.h\" \\[color=\"#7a1f1f\"\\][;]\n  \"ring/c\\.h\" -> \"shared/common\\.h\"[;]\n"
+)
+
+add_test(NAME cli.includes.rejects_unknown_output COMMAND tezcatl includes ${INCLUDES_ARGS} --output
+                                                        pie)
+set_tests_properties(cli.includes.rejects_unknown_output PROPERTIES WILL_FAIL TRUE)

@@ -150,3 +150,34 @@ lambda):
 rank** (the value at position ⌈0.9 × n⌉ in ascending order, so always a value that occurs),
 the maximum, and how many functions are flagged (including high) and high. A final `TOTAL` row
 covers every module.
+
+## Include dependencies
+
+`tezcatl includes` builds the `#include` graph at file level. Each directive is resolved by the
+compiler's own include search, with the translation unit's flags, so `"x.h"` resolves to the
+file the build actually uses.
+
+- **Nodes** are the project's files: every source file in the compilation database and every
+  file an edge reaches. System headers, files outside `--root` and files under the build
+  directory are not nodes, and edges to them are dropped.
+- **An edge** is an `#include` directive from one project file to another. Repeats (the same
+  directive seen from several translation units, or a file included twice) are one edge.
+- **Include guards and `#pragma once` do not hide edges.** When a header is skipped because it
+  was already included, the directive that tried to include it is still an edge. Tezcatl reads
+  the directives from the preprocessing record, not from the files that were entered.
+- The graph is the one the preprocessor saw with the project's flags: an `#include` inside an
+  `#ifdef` that the configuration disables is not an edge.
+- **Fan-in** of a file is the number of distinct project files that include it; **fan-out**, the
+  number it includes.
+- **A cycle** is a strongly connected component of more than one node (Tarjan's algorithm): a
+  set of files that each reach every other by following includes. Cycles are numbered from 1 in
+  the order of their first member, and each lists its members in path order.
+- **At module level**, every file edge is an edge between the modules of its two files. The
+  **coupling matrix** counts file edges for each pair of modules, including a module with
+  itself. Module fan-in, fan-out and cycles ignore edges within a module, since a module that
+  includes its own headers does not depend on itself. A module cycle can exist without any file
+  cycle: `a/x.h → b/y.h` and `b/z.h → a/w.h` make modules `a` and `b` depend on each other.
+
+`--output` selects the table: `edges`, `files` (fan-in, fan-out, cycle per file), `modules`,
+`cycles`, `coupling`, or `dot` (the file graph in Graphviz DOT, clustered by module, with the
+edges inside a cycle drawn in red).
