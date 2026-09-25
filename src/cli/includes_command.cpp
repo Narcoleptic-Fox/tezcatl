@@ -1,5 +1,6 @@
 #include "cli/includes_command.hpp"
 
+#include "cli/collect.hpp"
 #include "parse/includes.hpp"
 #include "report/include_graph.hpp"
 
@@ -14,20 +15,9 @@ int run_includes(const IncludesOptions& options, const Streams& streams) {
     std::ostream& out = streams.out;
     std::ostream& err = streams.err;
     const Project project{options.project};
-    std::vector<parse::IncludeEdge> edges;
-    std::vector<std::filesystem::path> sources;
-    const ScanTotals totals = project.scan(
-        [&](const parse::ParsedUnit& parsed) {
-            const std::filesystem::path source = parsed.file.lexically_normal();
-            if (project.in_project()(source)) {
-                sources.push_back(source);
-            }
-            auto found = parse::find_includes(parsed, project.in_project());
-            edges.insert(edges.end(), found.begin(), found.end());
-        },
-        err);
+    const Collected found = collect(project, {.includes = true}, err);
     const report::IncludeGraph graph =
-        report::build_include_graph(edges, sources, project.naming());
+        report::build_include_graph(found.includes, found.sources, project.naming());
 
     switch (options.output) {
     case IncludesOutput::edges:
@@ -50,7 +40,7 @@ int run_includes(const IncludesOptions& options, const Streams& streams) {
         break;
     }
     return project.finish(
-        totals,
+        found.totals,
         std::format("{} files, {} include edges, {} file cycles, {} module cycles",
                     graph.files.size(), graph.files.edge_count(), graph.file_cycles.size(),
                     graph.module_cycles.size()),
