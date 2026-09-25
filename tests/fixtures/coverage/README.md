@@ -16,8 +16,9 @@ The directory the data was generated in has been replaced by `/coverage-fixture`
 
 `tests/calc_test.cpp` and `compile_commands.json.in` were added afterwards so the same project can
 be parsed as well as imported: `calc.hpp` is then seen by three units, and the test file is test
-code by the default globs. The test file was never part of the measured program, so the coverage
-data has no record of it.
+code by the default globs. `src/platform_win.c` is in no unit, like code for another platform, so
+the report counts its lines and marks it not parsed. Neither file was part of the measured
+program, so the coverage data has no record of them.
 
 The expected totals come from the tools, not from Tezcatl:
 

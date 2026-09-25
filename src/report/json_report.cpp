@@ -99,6 +99,7 @@ json files(const ReportData& data, const FileNaming& naming) {
         result.push_back({{"path", naming.relative(file.file)},
                           {"module", naming.module_of(file.file)},
                           {"role", naming.role_of(file.file)},
+                          {"parsed", file.parsed},
                           {"lines", lines(file.counts)}});
     }
     return result;

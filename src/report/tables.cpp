@@ -68,12 +68,13 @@ void write_coverage_summary_row(std::ostream& out, const std::string& module,
 
 void write_file_table(std::ostream& out, const std::vector<FileLines>& files,
                       const FileNaming& naming) {
-    out << "file,module,role,physical,blank,comment,code\n";
+    out << "file,module,role,parsed,physical,blank,comment,code\n";
     for (const FileLines& file : files) {
         const metrics::LocCounts& c = file.counts;
         out << csv_field(naming.relative(file.file)) << ','
             << csv_field(naming.module_of(file.file)) << ',' << naming.role_of(file.file) << ','
-            << c.physical << ',' << c.blank << ',' << c.comment << ',' << c.code << '\n';
+            << (file.parsed ? "yes" : "no") << ',' << c.physical << ',' << c.blank << ','
+            << c.comment << ',' << c.code << '\n';
     }
 }
 

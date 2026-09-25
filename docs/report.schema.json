@@ -89,11 +89,12 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["path", "module", "role", "lines"],
+        "required": ["path", "module", "role", "parsed", "lines"],
         "properties": {
           "path": { "type": "string" },
           "module": { "type": "string" },
           "role": { "enum": ["production", "test"] },
+          "parsed": { "type": "boolean" },
           "lines": { "$ref": "#/definitions/lines" }
         }
       }

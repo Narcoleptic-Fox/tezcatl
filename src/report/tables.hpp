@@ -23,10 +23,15 @@ namespace tezcatl::report {
 struct FileLines {
     std::filesystem::path file;
     metrics::LocCounts counts;
+    /// Whether any unit parsed it, as its main file or through an include.
+    /// Only a parsed file can contribute functions, declarations or include
+    /// edges; the others (code for another platform, a module the build
+    /// skips) have lines and nothing else.
+    bool parsed = false;
 };
 
-/// One row per source file: file,module,role (production or test),physical,
-/// blank,comment,code.
+/// One row per source file: file,module,role (production or test),parsed
+/// (yes or no),physical,blank,comment,code.
 void write_file_table(std::ostream& out, const std::vector<FileLines>& files,
                       const FileNaming& naming);
 

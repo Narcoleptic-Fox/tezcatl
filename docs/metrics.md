@@ -129,6 +129,16 @@ product's, and a test header is not public API. Test functions and declarations 
 listed in `functions.csv` and `api.csv`, and `files.csv` and every file, function and
 declaration in `report.json` carry the role, so nothing is hidden, only kept out of the totals.
 
+### Parsed and unparsed files
+
+The report counts lines in **every** source file under the root, outside a build directory
+that lies inside it. Only files a unit of the compilation database reached, as its main file or
+through an include, are **parsed**: only they contribute functions, declarations and include
+edges. A file no unit reaches (code for another platform, a module the build skips) is still
+counted in lines of code and marked `parsed` = `no` in `files.csv` and `report.json`, and the
+report states how many there are before any figure. A build directory that is the root, or
+above it (an in-source build, such as Make with `bear`), excludes nothing.
+
 ## Cyclomatic complexity
 
 McCabe's cyclomatic complexity, per function (every entry in *Functions*, including each

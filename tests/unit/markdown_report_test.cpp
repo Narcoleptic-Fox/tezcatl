@@ -93,6 +93,17 @@ TEST_CASE("a long list is cut and names the CSV with all of it", "[report]") {
             "The 20 most complex of 28 production functions; all of them are in `functions.csv`."));
 }
 
+TEST_CASE("files no unit parsed are counted and named at the top", "[report]") {
+    report::ReportData data = test::sample_report();
+    CHECK_THAT(markdown(data),
+               ContainsSubstring("2 of the 3 source files under the root were parsed, as a unit "
+                                 "or through an include. The other 1 (`parsed` is `no`"));
+    for (report::FileLines& file : data.files) {
+        file.parsed = true;
+    }
+    CHECK_THAT(markdown(data), ContainsSubstring("All 3 source files under the root were parsed."));
+}
+
 TEST_CASE("parse errors are stated at the top", "[report]") {
     report::ReportData data = test::sample_report();
     CHECK_THAT(markdown(data), !ContainsSubstring("incomplete"));

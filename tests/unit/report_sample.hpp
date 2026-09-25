@@ -13,7 +13,8 @@ namespace tezcatl::test {
 ///   a/x.c        production, 10 lines (7 code, 2 comment, 1 blank); two
 ///                functions of complexity 3 and 12, Halstead V = E = 8 each;
 ///                coverage 10/8 lines, 4/2 branches, 2/1 functions
-///   a/tests/t.c  test, 5 lines (4 code, 1 comment); one function of 5
+///   a/tests/t.c  test, 5 lines (4 code, 1 comment); one function of 5;
+///                not parsed (no unit compiles it)
 ///   b/y.c        production, 4 code lines; one function of complexity 1;
 ///                includes a/x.h
 ///   a/x.h        two declarations, one doxygen-documented
@@ -57,11 +58,15 @@ inline report::ReportData sample_report() {
                        .coverage_inputs = {root / "coverage.info"},
                        .translation_units = 3,
                        .units_with_errors = 0};
-    data.files = {
-        {.file = root / "a/x.c", .counts = {.physical = 10, .blank = 1, .comment = 2, .code = 7}},
-        {.file = root / "a/tests/t.c",
-         .counts = {.physical = 5, .blank = 0, .comment = 1, .code = 4}},
-        {.file = root / "b/y.c", .counts = {.physical = 4, .blank = 0, .comment = 0, .code = 4}}};
+    data.files = {{.file = root / "a/x.c",
+                   .counts = {.physical = 10, .blank = 1, .comment = 2, .code = 7},
+                   .parsed = true},
+                  {.file = root / "a/tests/t.c",
+                   .counts = {.physical = 5, .blank = 0, .comment = 1, .code = 4},
+                   .parsed = false},
+                  {.file = root / "b/y.c",
+                   .counts = {.physical = 4, .blank = 0, .comment = 0, .code = 4},
+                   .parsed = true}};
     data.functions = {function("a/x.c", 1, 3, eight), function("a/x.c", 5, 12, eight),
                       function("a/tests/t.c", 1, 5, eight), function("b/y.c", 1, 1, {})};
     data.api = {api("a/x.h", 1, parse::DocStyle::doxygen), api("a/x.h", 2, parse::DocStyle::none),

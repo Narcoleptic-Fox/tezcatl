@@ -67,6 +67,18 @@ void header(std::ostream& out, const ReportData& data, const FileNaming& naming)
         out << " **The figures below are incomplete:** units that fail to parse contribute "
                "only what libclang could recover.";
     }
+    const auto parsed = static_cast<std::size_t>(
+        std::ranges::count_if(data.files, [](const FileLines& file) { return file.parsed; }));
+    if (parsed == data.files.size()) {
+        out << " All " << data.files.size() << " source files under the root were parsed.";
+    } else {
+        out << ' ' << parsed << " of the " << data.files.size()
+            << " source files under the root were parsed, as a unit or through an include. "
+               "The other "
+            << data.files.size() - parsed
+            << " (`parsed` is `no` in `files.csv`: code for other platforms, parts the build "
+               "skips) count toward lines of code and nothing else.";
+    }
     out << " Every figure is defined in Tezcatl's `docs/metrics.md`; the same data, complete, "
            "is in `report.json` and the CSV files next to this report.\n\n"
         << "Complexity thresholds: flagged over " << data.thresholds.flagged_over << ", high over "

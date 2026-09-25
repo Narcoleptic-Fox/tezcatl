@@ -23,6 +23,8 @@ public:
 
     [[nodiscard]] std::size_t size() const noexcept { return names_.size(); }
     [[nodiscard]] const std::string& name(std::size_t node) const { return names_.at(node); }
+    /// True if a node is named `name`.
+    [[nodiscard]] bool contains(const std::string& name) const;
     [[nodiscard]] const std::vector<std::size_t>& successors(std::size_t node) const {
         return successors_.at(node);
     }

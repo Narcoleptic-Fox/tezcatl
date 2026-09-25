@@ -7,6 +7,10 @@
 
 namespace tezcatl::graph {
 
+bool Digraph::contains(const std::string& name) const {
+    return std::ranges::binary_search(names_, name);
+}
+
 Digraph::Digraph(const std::vector<Edge>& edges, const std::vector<std::string>& isolated)
     : names_(isolated) {
     for (const auto& [from, to] : edges) {

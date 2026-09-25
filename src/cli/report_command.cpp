@@ -49,12 +49,17 @@ void write_output(const fs::path& directory, const Output& output) {
     }
 }
 
-std::vector<report::FileLines> count_project_lines(const Project& project) {
+// Every source file under the root, parsed or not: a file no unit reached
+// still has lines, and leaving it out would hide it.
+std::vector<report::FileLines> count_project_lines(const Project& project,
+                                                   const report::IncludeGraph& includes) {
     std::vector<report::FileLines> files;
     for (const fs::path& file :
          scan::find_source_files_under(project.naming().root(), project.in_project())) {
         if (project.in_project()(file)) {
-            files.push_back({.file = file, .counts = metrics::count_lines(scan::read_file(file))});
+            files.push_back({.file = file,
+                             .counts = metrics::count_lines(scan::read_file(file)),
+                             .parsed = includes.files.contains(project.naming().relative(file))});
         }
     }
     return files;
@@ -78,6 +83,10 @@ int run_report(const ReportOptions& options, std::ostream& err) {
     }
 
     Collected found = collect(project, {.functions = true, .api = true, .includes = true}, err);
+    // The include graph's nodes are exactly the files the units reached.
+    report::IncludeGraph includes =
+        report::build_include_graph(found.includes, found.sources, naming);
+    std::vector<report::FileLines> files = count_project_lines(project, includes);
     report::ReportData data{.provenance = {.tool_version = std::string{version},
                                            .libclang_version = parse::libclang_version(),
                                            .compilation_database = options.project.build_directory,
@@ -85,11 +94,10 @@ int run_report(const ReportOptions& options, std::ostream& err) {
                                            .translation_units = found.totals.units,
                                            .units_with_errors = found.totals.units_with_errors},
                             .thresholds = options.thresholds,
-                            .files = count_project_lines(project),
+                            .files = std::move(files),
                             .functions = std::move(found.functions),
                             .api = std::move(found.api),
-                            .includes =
-                                report::build_include_graph(found.includes, found.sources, naming),
+                            .includes = std::move(includes),
                             .coverage = std::move(coverage)};
 
     std::vector<Output> outputs{
