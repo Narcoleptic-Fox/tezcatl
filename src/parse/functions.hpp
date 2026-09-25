@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -24,7 +25,12 @@ enum class FunctionKind : std::uint8_t {
 
 [[nodiscard]] std::string_view to_string(FunctionKind kind) noexcept;
 
-/// A function definition with a body, as written in the source.
+/// The kind of function a cursor of this kind declares, or nothing if it
+/// does not declare one.
+[[nodiscard]] std::optional<FunctionKind> function_kind(CXCursorKind kind) noexcept;
+
+/// A function definition with a body, as written in the source, and its
+/// per-function metrics.
 struct FunctionInfo {
     std::filesystem::path file; ///< where the definition is written
     unsigned line = 0;          ///< 1-based, of the function's name (for a lambda, its '[')
@@ -34,6 +40,8 @@ struct FunctionInfo {
     /// types, e.g. "geo::Point::sum()". A lambda is named after the function
     /// that contains it: "use_lambda()::(lambda)".
     std::string name;
+    /// McCabe cyclomatic complexity, as defined in docs/metrics.md.
+    unsigned complexity = 1;
 
     /// Ordered by location, so a sorted list reads top to bottom per file.
     friend std::strong_ordering operator<=>(const FunctionInfo& a, const FunctionInfo& b) {

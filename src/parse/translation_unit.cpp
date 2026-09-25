@@ -47,22 +47,36 @@ ParsedUnit Parser::parse(const CompileCommand& command) const {
     //   the project's build policy, not a failure to parse, and libclang
     //   itself adds flags that clang-cl warns about, which /WX would turn into
     //   errors in every unit. Real errors (a missing header, bad syntax) still
-    //   count.
+    //   count;
+    // - the detailed preprocessing record, which is not optional. Without it
+    //   libclang annotates tokens written in a macro's arguments with the
+    //   enclosing statement, so the "&&" in CHECK(a && b) is invisible to
+    //   complexity, and it holds the #include directives that an include
+    //   guard or #pragma once skipped, which the include graph needs.
+    //   CXTranslationUnit_DetailedPreprocessingRecord alone is not enough:
+    //   libclang implements it by appending these same two arguments after
+    //   the caller's, where the GCC-mode "--" before the source file turns
+    //   them into file names and the record silently disappears (measured
+    //   with LLVM 22.1.3). Passed here, they come before the "--".
     std::vector<std::string> extra_options;
     if (!resource_directory_.empty()) {
         extra_options.push_back("-resource-dir=" + resource_directory_.string());
     }
     extra_options.emplace_back("-Wno-error");
+    extra_options.emplace_back("-Xclang");
+    extra_options.emplace_back("-detailed-preprocessing-record");
     const std::vector<std::string> arguments = portable_arguments(command, extra_options);
 
     std::vector<const char*> argv(arguments.size());
     std::ranges::transform(arguments, argv.begin(),
                            [](const std::string& argument) { return argument.c_str(); });
 
+    constexpr unsigned options =
+        CXTranslationUnit_KeepGoing | CXTranslationUnit_DetailedPreprocessingRecord;
     CXTranslationUnit raw_unit = nullptr;
     const CXErrorCode code = clang_parseTranslationUnit2FullArgv(
         index_.get(), /*source_filename=*/nullptr, argv.data(), static_cast<int>(argv.size()),
-        /*unsaved_files=*/nullptr, 0, CXTranslationUnit_KeepGoing, &raw_unit);
+        /*unsaved_files=*/nullptr, 0, options, &raw_unit);
 
     ParsedUnit parsed{.file = command.file,
                       .directory = command.directory,

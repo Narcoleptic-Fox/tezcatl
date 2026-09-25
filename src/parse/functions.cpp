@@ -1,5 +1,6 @@
 #include "parse/functions.hpp"
 
+#include "metrics/complexity.hpp"
 #include "parse/clang_string.hpp"
 
 #include <algorithm>
@@ -31,8 +32,6 @@ std::string_view to_string(FunctionKind kind) noexcept {
     return "unknown";
 }
 
-namespace {
-
 std::optional<FunctionKind> function_kind(CXCursorKind kind) noexcept {
     switch (kind) {
     case CXCursor_FunctionDecl:
@@ -53,6 +52,8 @@ std::optional<FunctionKind> function_kind(CXCursorKind kind) noexcept {
         return std::nullopt;
     }
 }
+
+namespace {
 
 // A body is a compound statement, or a try block for a function-try-block,
 // directly under the function. Declarations and deleted functions have none.
@@ -133,6 +134,7 @@ Location location_of(CXCursor cursor, const fs::path& directory) {
 }
 
 struct VisitContext {
+    CXTranslationUnit unit = nullptr;
     const fs::path* directory = nullptr; ///< for resolving relative file names
     const FileFilter* include_file = nullptr;
     std::vector<FunctionInfo>* found = nullptr;
@@ -160,16 +162,19 @@ CXChildVisitResult visit(CXCursor cursor, CXCursor /*parent*/, CXClientData data
     }
 
     if (has_body(cursor) && !location.file.empty() && (*context.include_file)(location.file)) {
-        context.found->push_back({.file = location.file,
-                                  .line = location.line,
-                                  .column = location.column,
-                                  .kind = *kind,
-                                  .name = name});
+        context.found->push_back(
+            {.file = location.file,
+             .line = location.line,
+             .column = location.column,
+             .kind = *kind,
+             .name = name,
+             .complexity = metrics::cyclomatic_complexity(context.unit, cursor)});
     }
 
     // Visit the body with this function as the enclosing one, so lambdas
     // inside it are named after it.
-    VisitContext inner{.directory = context.directory,
+    VisitContext inner{.unit = context.unit,
+                       .directory = context.directory,
                        .include_file = context.include_file,
                        .found = context.found,
                        .enclosing_function = std::move(name)};
@@ -185,7 +190,8 @@ std::vector<FunctionInfo> find_functions(const ParsedUnit& parsed, const FileFil
                                     " has no translation unit");
     }
     std::vector<FunctionInfo> found;
-    VisitContext context{.directory = &parsed.directory,
+    VisitContext context{.unit = parsed.unit.get(),
+                         .directory = &parsed.directory,
                          .include_file = &include_file,
                          .found = &found,
                          .enclosing_function = {}};

@@ -38,7 +38,8 @@ public:
     explicit Parser(std::filesystem::path resource_directory);
 
     /// Parses one compilation database entry with its own flags, as if run
-    /// from its own working directory.
+    /// from its own working directory, keeping the detailed preprocessing
+    /// record (macro expansions and every #include directive).
     [[nodiscard]] ParsedUnit parse(const CompileCommand& command) const;
 
 private:

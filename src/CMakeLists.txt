@@ -4,11 +4,13 @@ add_library(
     tezcatl_core STATIC
     cli/functions_command.cpp
     cli/loc_command.cpp
+    metrics/complexity.cpp
     metrics/loc.cpp
     parse/command_line.cpp
     parse/compilation_database.cpp
     parse/functions.cpp
     parse/libclang_info.cpp
+    parse/tokens.cpp
     parse/translation_unit.cpp
     report/csv.cpp
     scan/paths.cpp
