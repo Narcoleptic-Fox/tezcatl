@@ -2,6 +2,7 @@ configure_file(tezcatl/version.hpp.in "${PROJECT_BINARY_DIR}/generated/tezcatl/v
 
 add_library(
     tezcatl_core STATIC
+    metrics/loc.cpp
     parse/libclang_info.cpp
     scan/source_files.cpp)
 add_library(tezcatl::core ALIAS tezcatl_core)
