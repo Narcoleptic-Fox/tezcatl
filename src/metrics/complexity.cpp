@@ -1,46 +1,14 @@
 #include "metrics/complexity.hpp"
 
-#include "parse/functions.hpp"
 #include "parse/tokens.hpp"
 
 #include <algorithm>
 #include <cstddef>
 #include <string>
-#include <vector>
 
 namespace tezcatl::metrics {
 
 namespace {
-
-/// A half-open range of byte offsets in one file.
-struct OffsetRange {
-    unsigned begin = 0;
-    unsigned end = 0;
-
-    [[nodiscard]] bool contains(unsigned offset) const noexcept {
-        return offset >= begin && offset < end;
-    }
-};
-
-// Where the functions directly nested in `function` are written. Deeper
-// nesting lies inside these ranges, so the search stops at each one.
-std::vector<OffsetRange> nested_functions(CXCursor function) {
-    std::vector<OffsetRange> nested;
-    clang_visitChildren(
-        function,
-        [](CXCursor child, CXCursor /*parent*/, CXClientData data) {
-            if (!parse::function_kind(clang_getCursorKind(child)).has_value()) {
-                return CXChildVisit_Recurse;
-            }
-            const CXSourceRange extent = clang_getCursorExtent(child);
-            static_cast<std::vector<OffsetRange>*>(data)->push_back(
-                {.begin = parse::file_offset(clang_getRangeStart(extent)),
-                 .end = parse::file_offset(clang_getRangeEnd(extent))});
-            return CXChildVisit_Continue;
-        },
-        &nested);
-    return nested;
-}
 
 bool is_pack_expansion(const parse::TokenList& tokens, std::size_t index) {
     return tokens.spelling(index) == "...";
@@ -119,19 +87,11 @@ bool is_decision_point(const parse::TokenList& tokens, std::size_t index) {
 
 } // namespace
 
-unsigned cyclomatic_complexity(CXTranslationUnit unit, CXCursor function) {
-    const parse::TokenList tokens{unit, clang_getCursorExtent(function)};
-    const std::vector<OffsetRange> nested = nested_functions(function);
-    unsigned complexity = 1;
-    for (std::size_t index = 0; index < tokens.size(); ++index) {
-        const unsigned offset = tokens.offset(index);
-        const bool in_nested_function = std::ranges::any_of(
-            nested, [offset](const OffsetRange& range) { return range.contains(offset); });
-        if (!in_nested_function && is_decision_point(tokens, index)) {
-            ++complexity;
-        }
-    }
-    return complexity;
+unsigned cyclomatic_complexity(const parse::FunctionTokens& function) {
+    const auto decisions = std::ranges::count_if(function.own(), [&function](std::size_t index) {
+        return is_decision_point(function.all(), index);
+    });
+    return 1 + static_cast<unsigned>(decisions);
 }
 
 } // namespace tezcatl::metrics

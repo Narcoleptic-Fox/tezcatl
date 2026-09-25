@@ -2,6 +2,7 @@
 
 #include "metrics/complexity.hpp"
 #include "parse/clang_string.hpp"
+#include "parse/function_tokens.hpp"
 
 #include <algorithm>
 #include <optional>
@@ -168,7 +169,7 @@ CXChildVisitResult visit(CXCursor cursor, CXCursor /*parent*/, CXClientData data
              .column = location.column,
              .kind = *kind,
              .name = name,
-             .complexity = metrics::cyclomatic_complexity(context.unit, cursor)});
+             .complexity = metrics::cyclomatic_complexity(FunctionTokens{context.unit, cursor})});
     }
 
     // Visit the body with this function as the enclosing one, so lambdas

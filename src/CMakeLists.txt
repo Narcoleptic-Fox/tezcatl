@@ -13,6 +13,7 @@ add_library(
     metrics/summary.cpp
     parse/command_line.cpp
     parse/compilation_database.cpp
+    parse/function_tokens.cpp
     parse/functions.cpp
     parse/includes.cpp
     parse/libclang_info.cpp

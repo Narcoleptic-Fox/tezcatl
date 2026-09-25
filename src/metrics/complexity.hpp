@@ -1,13 +1,13 @@
 #pragma once
 
-#include <clang-c/Index.h>
+#include "parse/function_tokens.hpp"
 
 namespace tezcatl::metrics {
 
-/// McCabe cyclomatic complexity of the function definition at `function`:
-/// 1 plus one for each decision point written in its definition, excluding
-/// the decision points of functions nested in it (lambdas, member functions
-/// of local classes), which have complexities of their own.
+/// McCabe cyclomatic complexity of a function definition: 1 plus one for
+/// each decision point among its own tokens, so the decision points of
+/// functions nested in it (lambdas, member functions of local classes) count
+/// towards those functions instead.
 ///
 /// A decision point is an `if`, `for` (either form), `while`, `do`, `case`,
 /// `catch`, `&&`, `||` or `?:` that is both written as a token in the
@@ -19,8 +19,8 @@ namespace tezcatl::metrics {
 /// decisions written in a macro's arguments are. docs/metrics.md has the
 /// full definition.
 ///
-/// `unit` must have been parsed with the detailed preprocessing record,
+/// The unit must have been parsed with the detailed preprocessing record,
 /// or decisions in macro arguments are missed.
-[[nodiscard]] unsigned cyclomatic_complexity(CXTranslationUnit unit, CXCursor function);
+[[nodiscard]] unsigned cyclomatic_complexity(const parse::FunctionTokens& function);
 
 } // namespace tezcatl::metrics
