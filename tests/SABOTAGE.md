@@ -47,7 +47,7 @@ both the GCC-style and the clang-cl database.
 | # | Sabotage | Caught by |
 |---|---|---|
 | 21 | `&&` never a decision point (src/metrics/complexity.cpp) | the fixture, `cli.functions.summary` |
-| 22 | decisions in nested lambdas and local classes not excluded | the fixture, `cli.functions.summary` |
+| 22 | tokens of nested lambdas and local classes not excluded (src/parse/function_tokens.cpp since 2026-09-25, shared with Halstead) | the fixture, `cli.functions.summary`, and the Halstead fixture test |
 | 23 | `-Xclang -detailed-preprocessing-record` not passed (the libclang option alone, which a GCC-mode `--` disables) | the fixture, both include tests, `cli.functions.summary` and all five `cli.includes.*` table tests |
 | 24 | tokens lexed from the raw extent instead of the written range (a macro-made function lexed from its `#define`) | the fixture, `cli.functions.summary` |
 | 25 | the `while` of a do-while counted as well as its `do` | the fixture, `cli.functions.summary` |
@@ -65,6 +65,21 @@ both the GCC-style and the clang-cl database.
 | 37 | glob `*` crosses `/` (src/scan/glob.cpp) | *\* stays within one path component* |
 | 38 | glob `**/` never matches zero directories | *\*\* crosses path components* |
 | 39 | the last matching module rule wins (src/config/modules.cpp) | *the first matching rule names the module* |
+
+### Halstead, all confirmed 2026-09-25 on MSVC
+
+| # | Sabotage | Caught by |
+|---|---|---|
+| 49 | regions a false `#if` skipped are counted (src/parse/function_tokens.cpp) | *Halstead counts of each function match the hand counts in the fixture* |
+| 50 | preprocessor directive lines are counted | the same |
+| 51 | closing brackets counted as operators (src/metrics/halstead.cpp) | the fixture test, both hand-computed measure tests, *operators, operands and the tokens that do not count* |
+| 52 | `true`, `false`, `nullptr`, `this` counted as operators | the fixture test, *Halstead measures with literals and a value keyword*, the role test |
+| 53 | difficulty not halved (n1 N2 / n2) | both hand-computed measure tests |
+| 54 | volume with the natural logarithm | both hand-computed measure tests |
+| 55 | a module's volume summed from difficulty (src/cli/functions_command.cpp) | `cli.functions.halstead_summary` |
+| 56 | difficulty and effort columns swapped | `cli.functions.halstead` |
+
+The no-op control stayed green in both runs.
 
 ### Include graph, all confirmed 2026-09-25 on MSVC
 
