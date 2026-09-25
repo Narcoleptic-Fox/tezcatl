@@ -1,0 +1,393 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/Narcoleptic-Fox/tezcatl/blob/main/docs/report.schema.json",
+  "title": "Tezcatl report",
+  "description": "A code metrics baseline written by `tezcatl report`. Every metric is defined in docs/metrics.md. schema_version changes whenever a field is added, removed or changes meaning.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "tool",
+    "input",
+    "settings",
+    "totals",
+    "modules",
+    "files",
+    "functions",
+    "api",
+    "coverage",
+    "includes"
+  ],
+  "properties": {
+    "schema": { "const": "tezcatl-report" },
+    "schema_version": { "const": 1 },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "libclang"],
+      "properties": {
+        "name": { "const": "tezcatl" },
+        "version": { "type": "string" },
+        "libclang": { "type": "string" }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "compilation_database",
+        "coverage",
+        "translation_units",
+        "units_with_errors"
+      ],
+      "properties": {
+        "root": { "type": "string" },
+        "compilation_database": { "type": "string" },
+        "coverage": { "type": "array", "items": { "type": "string" } },
+        "translation_units": { "$ref": "#/definitions/count" },
+        "units_with_errors": { "$ref": "#/definitions/count" }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["complexity", "test_globs", "modules"],
+      "properties": {
+        "complexity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["flagged_over", "high_over"],
+          "properties": {
+            "flagged_over": { "$ref": "#/definitions/count" },
+            "high_over": { "$ref": "#/definitions/count" }
+          }
+        },
+        "test_globs": { "type": "array", "items": { "type": "string" } },
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["module", "glob"],
+            "properties": {
+              "module": { "type": "string" },
+              "glob": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "totals": { "$ref": "#/definitions/module_row" },
+    "modules": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/module_row" }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "module", "role", "lines"],
+        "properties": {
+          "path": { "type": "string" },
+          "module": { "type": "string" },
+          "role": { "enum": ["production", "test"] },
+          "lines": { "$ref": "#/definitions/lines" }
+        }
+      }
+    },
+    "functions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file",
+          "line",
+          "column",
+          "kind",
+          "name",
+          "module",
+          "role",
+          "complexity",
+          "rating",
+          "halstead"
+        ],
+        "properties": {
+          "file": { "type": "string" },
+          "line": { "$ref": "#/definitions/position" },
+          "column": { "$ref": "#/definitions/position" },
+          "kind": {
+            "enum": [
+              "function",
+              "method",
+              "constructor",
+              "destructor",
+              "conversion",
+              "function_template",
+              "lambda"
+            ]
+          },
+          "name": { "type": "string" },
+          "module": { "type": "string" },
+          "role": { "enum": ["production", "test"] },
+          "complexity": { "type": "integer", "minimum": 1 },
+          "rating": { "enum": ["ok", "flagged", "high"] },
+          "halstead": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "distinct_operators",
+              "distinct_operands",
+              "total_operators",
+              "total_operands",
+              "volume",
+              "difficulty",
+              "effort"
+            ],
+            "properties": {
+              "distinct_operators": { "$ref": "#/definitions/count" },
+              "distinct_operands": { "$ref": "#/definitions/count" },
+              "total_operators": { "$ref": "#/definitions/count" },
+              "total_operands": { "$ref": "#/definitions/count" },
+              "volume": { "$ref": "#/definitions/measure" },
+              "difficulty": { "$ref": "#/definitions/measure" },
+              "effort": { "$ref": "#/definitions/measure" }
+            }
+          }
+        }
+      }
+    },
+    "api": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file",
+          "line",
+          "column",
+          "kind",
+          "name",
+          "module",
+          "role",
+          "documentation"
+        ],
+        "properties": {
+          "file": { "type": "string" },
+          "line": { "$ref": "#/definitions/position" },
+          "column": { "$ref": "#/definitions/position" },
+          "kind": {
+            "enum": [
+              "function",
+              "method",
+              "field",
+              "variable",
+              "type",
+              "type_alias"
+            ]
+          },
+          "name": { "type": "string" },
+          "module": { "type": "string" },
+          "role": { "enum": ["production", "test"] },
+          "documentation": { "enum": ["doxygen", "plain", "none"] }
+        }
+      }
+    },
+    "coverage": {
+      "description": "Null when no coverage data was given.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["file", "module", "counts"],
+            "properties": {
+              "file": { "type": "string" },
+              "module": { "type": "string" },
+              "counts": { "$ref": "#/definitions/coverage_counts" }
+            }
+          }
+        }
+      ]
+    },
+    "includes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["edges", "file_cycles", "module_cycles", "coupling"],
+      "properties": {
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "to"],
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" }
+            }
+          }
+        },
+        "file_cycles": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/cycle" }
+        },
+        "module_cycles": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/cycle" }
+        },
+        "coupling": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "to", "edges"],
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "edges": { "$ref": "#/definitions/count" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "count": { "type": "integer", "minimum": 0 },
+    "position": { "type": "integer", "minimum": 1 },
+    "measure": { "type": "number", "minimum": 0 },
+    "percent": { "type": "number", "minimum": 0, "maximum": 100 },
+    "cycle": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+    "lines": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["physical", "blank", "comment", "code"],
+      "properties": {
+        "physical": { "$ref": "#/definitions/count" },
+        "blank": { "$ref": "#/definitions/count" },
+        "comment": { "$ref": "#/definitions/count" },
+        "code": { "$ref": "#/definitions/count" }
+      }
+    },
+    "coverage_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lines",
+        "lines_covered",
+        "branches",
+        "branches_covered",
+        "functions",
+        "functions_covered"
+      ],
+      "properties": {
+        "lines": { "$ref": "#/definitions/count" },
+        "lines_covered": { "$ref": "#/definitions/count" },
+        "branches": { "$ref": "#/definitions/count" },
+        "branches_covered": { "$ref": "#/definitions/count" },
+        "functions": { "$ref": "#/definitions/count" },
+        "functions_covered": { "$ref": "#/definitions/count" }
+      }
+    },
+    "module_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "module",
+        "files",
+        "lines",
+        "complexity",
+        "halstead",
+        "documentation",
+        "coverage",
+        "includes"
+      ],
+      "properties": {
+        "module": { "type": "string" },
+        "files": { "$ref": "#/definitions/count" },
+        "lines": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["production", "test"],
+          "properties": {
+            "production": { "$ref": "#/definitions/lines" },
+            "test": { "$ref": "#/definitions/lines" }
+          }
+        },
+        "complexity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "functions",
+            "mean",
+            "median",
+            "p90",
+            "max",
+            "flagged",
+            "high"
+          ],
+          "properties": {
+            "functions": { "$ref": "#/definitions/count" },
+            "mean": { "$ref": "#/definitions/measure" },
+            "median": { "$ref": "#/definitions/measure" },
+            "p90": { "$ref": "#/definitions/count" },
+            "max": { "$ref": "#/definitions/count" },
+            "flagged": { "$ref": "#/definitions/count" },
+            "high": { "$ref": "#/definitions/count" }
+          }
+        },
+        "halstead": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["volume", "effort"],
+          "properties": {
+            "volume": { "$ref": "#/definitions/measure" },
+            "effort": { "$ref": "#/definitions/measure" }
+          }
+        },
+        "documentation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["declarations", "documented", "doxygen", "percent"],
+          "properties": {
+            "declarations": { "$ref": "#/definitions/count" },
+            "documented": { "$ref": "#/definitions/count" },
+            "doxygen": { "$ref": "#/definitions/count" },
+            "percent": { "$ref": "#/definitions/percent" }
+          }
+        },
+        "coverage": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/definitions/coverage_counts" }
+          ]
+        },
+        "includes": {
+          "description": "Null in the totals, which are not part of a module graph.",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["fan_in", "fan_out", "cycle"],
+              "properties": {
+                "fan_in": { "$ref": "#/definitions/count" },
+                "fan_out": { "$ref": "#/definitions/count" },
+                "cycle": {
+                  "oneOf": [
+                    { "type": "null" },
+                    { "$ref": "#/definitions/position" }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

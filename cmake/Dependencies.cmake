@@ -27,4 +27,14 @@ if(TEZCATL_BUILD_TESTS)
         SYSTEM)
     FetchContent_MakeAvailable(Catch2)
     list(APPEND CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/extras")
+
+    # Validates the report against docs/report.schema.json in the tests. The
+    # project publishes no hash; this is the tag archive's SHA-256 as
+    # downloaded on 2026-09-25. It uses the nlohmann_json target above.
+    FetchContent_Declare(
+        nlohmann_json_schema_validator
+        URL https://github.com/pboettch/json-schema-validator/archive/refs/tags/2.4.0.tar.gz
+        URL_HASH SHA256=24cbb114609cc9b43d4018b8d03e082ff5d2f26f5dce8bd36538097267b63af9
+        SYSTEM)
+    FetchContent_MakeAvailable(nlohmann_json_schema_validator)
 endif()

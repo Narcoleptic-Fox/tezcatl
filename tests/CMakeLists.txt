@@ -41,6 +41,7 @@ add_executable(
     unit/halstead_test.cpp
     unit/includes_test.cpp
     unit/lcov_test.cpp
+    unit/json_report_test.cpp
     unit/libclang_info_test.cpp
     unit/loc_test.cpp
     unit/module_summary_test.cpp
@@ -49,10 +50,12 @@ add_executable(
     unit/paths_test.cpp
     unit/source_files_test.cpp
     unit/summary_test.cpp)
-target_link_libraries(tezcatl_tests PRIVATE tezcatl::core Catch2::Catch2WithMain)
+target_link_libraries(tezcatl_tests PRIVATE tezcatl::core Catch2::Catch2WithMain
+                                            nlohmann_json_schema_validator::validator)
 target_compile_definitions(
     tezcatl_tests PRIVATE TEZCATL_FIXTURES_DIR="${TEZCATL_FIXTURES_DIR}"
-                          TEZCATL_FIXTURE_DBS="${TEZCATL_FIXTURE_DBS}")
+                          TEZCATL_FIXTURE_DBS="${TEZCATL_FIXTURE_DBS}"
+                          TEZCATL_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 tezcatl_apply_warnings(tezcatl_tests)
 tezcatl_copy_runtime_dlls(tezcatl_tests)
 
