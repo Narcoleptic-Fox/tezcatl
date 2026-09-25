@@ -33,6 +33,7 @@ add_executable(
     unit/csv_test.cpp
     unit/functions_test.cpp
     unit/glob_test.cpp
+    unit/graph_test.cpp
     unit/libclang_info_test.cpp
     unit/loc_test.cpp
     unit/modules_test.cpp

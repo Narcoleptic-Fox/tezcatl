@@ -6,6 +6,7 @@ add_library(
     cli/loc_command.cpp
     cli/project.cpp
     config/modules.cpp
+    graph/digraph.cpp
     metrics/complexity.cpp
     metrics/loc.cpp
     metrics/summary.cpp
