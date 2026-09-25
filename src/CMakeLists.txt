@@ -11,6 +11,7 @@ add_library(
     coverage/json_readers.cpp
     coverage/lcov.cpp
     coverage/model.cpp
+    coverage/path_map.cpp
     coverage/read_file.cpp
     graph/digraph.cpp
     metrics/complexity.cpp
