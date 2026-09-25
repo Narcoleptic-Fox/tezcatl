@@ -38,6 +38,7 @@ add_executable(
     unit/graph_test.cpp
     unit/halstead_test.cpp
     unit/includes_test.cpp
+    unit/lcov_test.cpp
     unit/libclang_info_test.cpp
     unit/loc_test.cpp
     unit/modules_test.cpp
