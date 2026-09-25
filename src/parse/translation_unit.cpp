@@ -63,7 +63,12 @@ ParsedUnit Parser::parse(const CompileCommand& command) const {
     //   uninstantiated function template or member of a class template has no
     //   body in the AST and would silently vanish from the report (measured:
     //   Catch2 built as C++14 lost its template member functions). Accepted
-    //   by both drivers.
+    //   by both drivers;
+    // - "-fparse-all-comments", so that an ordinary comment above a
+    //   declaration is attached to it as well as a /// or /** one. Much C code
+    //   is documented with plain comments, and without this it would all
+    //   count as undocumented. Passed through -Xclang, which both drivers
+    //   accept.
     std::vector<std::string> extra_options;
     if (!resource_directory_.empty()) {
         extra_options.push_back("-resource-dir=" + resource_directory_.string());
@@ -72,6 +77,8 @@ ParsedUnit Parser::parse(const CompileCommand& command) const {
     extra_options.emplace_back("-fno-delayed-template-parsing");
     extra_options.emplace_back("-Xclang");
     extra_options.emplace_back("-detailed-preprocessing-record");
+    extra_options.emplace_back("-Xclang");
+    extra_options.emplace_back("-fparse-all-comments");
     const std::vector<std::string> arguments = portable_arguments(command, extra_options);
 
     std::vector<const char*> argv(arguments.size());

@@ -12,6 +12,7 @@ add_library(
     metrics/halstead.cpp
     metrics/loc.cpp
     metrics/summary.cpp
+    parse/api.cpp
     parse/command_line.cpp
     parse/compilation_database.cpp
     parse/cursors.cpp

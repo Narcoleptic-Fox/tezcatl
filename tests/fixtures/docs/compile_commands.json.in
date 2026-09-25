@@ -1,0 +1,12 @@
+[
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["clang++", "-std=c++20", "-Iinclude", "-c", "src/api.cpp"],
+    "file": "src/api.cpp"
+  },
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["clang", "-std=c11", "-Iinclude", "-c", "src/c_api.c"],
+    "file": "src/c_api.c"
+  }
+]
