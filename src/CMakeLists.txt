@@ -8,6 +8,7 @@ add_library(
     cli/includes_command.cpp
     cli/loc_command.cpp
     cli/project.cpp
+    config/file_roles.cpp
     config/modules.cpp
     coverage/json_readers.cpp
     coverage/lcov.cpp
