@@ -14,6 +14,7 @@ add_library(
     parse/tokens.cpp
     parse/translation_unit.cpp
     report/csv.cpp
+    scan/glob.cpp
     scan/paths.cpp
     scan/source_files.cpp)
 add_library(tezcatl::core ALIAS tezcatl_core)

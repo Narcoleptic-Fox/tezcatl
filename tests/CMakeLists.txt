@@ -32,6 +32,7 @@ add_executable(
     unit/complexity_test.cpp
     unit/csv_test.cpp
     unit/functions_test.cpp
+    unit/glob_test.cpp
     unit/libclang_info_test.cpp
     unit/loc_test.cpp
     unit/paths_test.cpp
