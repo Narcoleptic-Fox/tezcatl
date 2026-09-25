@@ -48,6 +48,7 @@ add_executable(
     unit/module_summary_test.cpp
     unit/modules_test.cpp
     unit/path_map_test.cpp
+    unit/project_test.cpp
     unit/paths_test.cpp
     unit/source_files_test.cpp
     unit/summary_test.cpp

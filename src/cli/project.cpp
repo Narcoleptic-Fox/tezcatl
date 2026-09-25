@@ -34,13 +34,22 @@ Project::Project(const ProjectOptions& options)
                  ? fs::path{}
                  : fs::absolute(options.build_directory).lexically_normal()),
       in_project_([this](const fs::path& file) {
-          return scan::is_within(file, root_) && (build_.empty() || !scan::is_within(file, build_));
+          return scan::is_within(file, root_) &&
+                 (excluded_.empty() || !scan::is_within(file, excluded_));
       }),
       naming_(options.root,
               options.module_map.empty() ? config::ModuleMap{}
                                          : config::ModuleMap::load(options.module_map),
               options.test_globs.empty() ? config::FileRoles{}
-                                         : config::FileRoles{options.test_globs}) {}
+                                         : config::FileRoles{options.test_globs}) {
+    // A build directory inside the root holds generated code and fetched
+    // dependencies. One that is the root, or above it, is an in-source build
+    // (Make with bear writes compile_commands.json at the top): excluding it
+    // would exclude the whole project.
+    if (!build_.empty() && scan::is_within(build_, root_) && !scan::is_within(root_, build_)) {
+        excluded_ = build_;
+    }
+}
 
 ScanTotals Project::scan(const std::function<void(const parse::ParsedUnit&)>& visit,
                          std::ostream& err) const {

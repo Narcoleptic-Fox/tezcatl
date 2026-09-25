@@ -55,7 +55,9 @@ public:
     Project& operator=(Project&&) = delete;
 
     /// True for files under the root and not under the build directory, if
-    /// there is one (fetched dependencies, generated code).
+    /// that is strictly inside the root (fetched dependencies, generated
+    /// code). A build directory that is the root, or above it, is an
+    /// in-source build and excludes nothing.
     [[nodiscard]] const parse::FileFilter& in_project() const noexcept { return in_project_; }
     /// How files are named, and assigned to modules and roles.
     [[nodiscard]] const report::FileNaming& naming() const noexcept { return naming_; }
@@ -76,6 +78,7 @@ private:
     ProjectOptions options_;
     std::filesystem::path root_;
     std::filesystem::path build_;
+    std::filesystem::path excluded_; ///< the build directory, if strictly inside the root
     parse::FileFilter in_project_;
     report::FileNaming naming_;
 };
