@@ -1,6 +1,7 @@
 #include "cli/loc_command.hpp"
 
 #include "metrics/loc.hpp"
+#include "report/csv.hpp"
 #include "scan/source_files.hpp"
 
 #include <ostream>
@@ -12,8 +13,8 @@ namespace tezcatl::cli {
 namespace {
 
 void write_row(std::ostream& out, std::string_view name, const metrics::LocCounts& counts) {
-    out << name << ',' << counts.physical << ',' << counts.blank << ',' << counts.comment << ','
-        << counts.code << '\n';
+    out << report::csv_field(name) << ',' << counts.physical << ',' << counts.blank << ','
+        << counts.comment << ',' << counts.code << '\n';
 }
 
 std::string_view kind_name(metrics::LineKind kind) noexcept {
@@ -47,7 +48,7 @@ void run_loc_lines(const std::vector<std::filesystem::path>& inputs, std::ostrea
         const std::string name = file.generic_string();
         std::size_t number = 0;
         for (const metrics::LineKind kind : metrics::classify_lines(scan::read_file(file))) {
-            out << name << ',' << ++number << ',' << kind_name(kind) << '\n';
+            out << report::csv_field(name) << ',' << ++number << ',' << kind_name(kind) << '\n';
         }
     }
 }
