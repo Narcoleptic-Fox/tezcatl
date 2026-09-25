@@ -2,8 +2,11 @@
 
 #include "cli/project.hpp"
 #include "coverage/path_map.hpp"
+#include "report/tables.hpp"
 
 #include <filesystem>
+#include <iosfwd>
+#include <optional>
 #include <vector>
 
 namespace tezcatl::cli {
@@ -27,5 +30,14 @@ struct CoverageOptions {
 /// are left out and counted on `err`; if no file is under the root, that is
 /// an error (exit code 1), since the paths most likely need mapping.
 [[nodiscard]] int run_coverage(const CoverageOptions& options, const Streams& streams);
+
+/// Reads and merges `inputs`, moves recorded paths by `path_maps`, and
+/// attributes the data to `project`'s files. Writes how many files are
+/// under the root and outside it to `err`. If none is under the root, also
+/// writes why that most likely is and returns nothing.
+[[nodiscard]] std::optional<report::AttributedCoverage>
+import_coverage(const std::vector<std::filesystem::path>& inputs,
+                const std::vector<coverage::PathMapping>& path_maps, const Project& project,
+                std::ostream& err);
 
 } // namespace tezcatl::cli
