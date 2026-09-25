@@ -1,5 +1,7 @@
+#include "cli/functions_command.hpp"
 #include "cli/loc_command.hpp"
 #include "parse/libclang_info.hpp"
+#include "parse/translation_unit.hpp"
 #include "tezcatl/version.hpp"
 
 #include <CLI/CLI.hpp>
@@ -40,6 +42,28 @@ int run(int argc, char** argv) {
     bool loc_by_line = false;
     loc->add_flag("--lines", loc_by_line, "Classify every physical line instead of totalling");
 
+    tezcatl::cli::FunctionsOptions functions_options{
+        .build_directory = {},
+        .root = std::filesystem::current_path(),
+        .resource_directory = tezcatl::parse::default_resource_directory(),
+        .allow_parse_errors = false};
+    CLI::App* functions = app.add_subcommand(
+        "functions", "List every function definition, parsed with the project's own flags.");
+    functions
+        ->add_option("-p,--build-dir", functions_options.build_directory,
+                     "Directory containing compile_commands.json")
+        ->required();
+    functions
+        ->add_option("--root", functions_options.root,
+                     "Only report functions written under this directory")
+        ->capture_default_str();
+    functions
+        ->add_option("--resource-dir", functions_options.resource_directory,
+                     "clang resource directory (built-in headers such as stddef.h)")
+        ->capture_default_str();
+    functions->add_flag("--allow-parse-errors", functions_options.allow_parse_errors,
+                        "Exit 0 even if some translation units failed to parse");
+
     CLI11_PARSE(app, argc, argv);
 
     if (loc->parsed()) {
@@ -48,6 +72,9 @@ int run(int argc, char** argv) {
         } else {
             tezcatl::cli::run_loc(loc_inputs, std::cout);
         }
+    }
+    if (functions->parsed()) {
+        return tezcatl::cli::run_functions(functions_options, std::cout, std::cerr);
     }
     return EXIT_SUCCESS;
 }

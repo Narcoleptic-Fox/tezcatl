@@ -23,6 +23,26 @@ the check.
 | 9 | the UTF-8 byte order mark not skipped | *a UTF-8 byte order mark is not code* |
 | 10 | `/` after an opener's own `*` closes the comment | *block comments span lines...* |
 
+### Parsing and function discovery (src/parse/), all confirmed 2026-09-24 on MSVC
+
+| # | Sabotage | Caught by |
+|---|---|---|
+| 11 | no `-resource-dir` passed | *every function definition...*, *functions in system headers...* (via `<cpuid.h>`; with only `<stddef.h>` this sabotage passed on Windows, because the OS headers also provide it) |
+| 12 | no working directory handling at all | 5 tests, including both fixture databases and the CLI tests |
+| 13 | `has_body` always true (declarations, `= default`, `= delete` reported) | *every function definition...* |
+| 14 | `merge_duplicates` keeps repeats | *every function definition...* |
+| 15 | functions in system headers kept | *functions in system headers are never reported...* |
+| 16 | error diagnostics ignored | *a unit that fails to parse...*, `cli.functions.parse_error_fails`, `cli.functions.parse_error_reported` |
+| 17 | GCC-mode `-working-directory=` fallback removed | `cli.functions.working_directory_fallback` and the command-line unit tests |
+| 18 | include-path flags left relative | the command-line unit tests and the clang-cl fixture |
+| 19 | the source file left relative | the command-line unit tests and the clang-cl fixture |
+| 19a | the clang-cl source file not marked with /Tp | only on Linux, where the clang-cl fixture's absolute path begins with an option letter (`/w/...` in the container, `/opt/...` on the runner); on Windows the path is `D:\...` and cannot be misread. The unit test *clang-cl names the source file with its language* catches it everywhere |
+| 20 | `-Wno-error` not appended | `cli.functions.werror_is_not_a_parse_error` and the clang-cl fixture (`/WX`) |
+
+Tried and found to change nothing, so not a check: spelling the resource directory
+`/clang:-resource-dir=` versus `-resource-dir=` in clang-cl mode. Both work, so only the plain
+spelling is used.
+
 Checks that have caught real defects (so they are known to fire):
 
 | Check | Defect it caught | Date |

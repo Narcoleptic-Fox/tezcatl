@@ -2,6 +2,7 @@ configure_file(tezcatl/version.hpp.in "${PROJECT_BINARY_DIR}/generated/tezcatl/v
 
 add_library(
     tezcatl_core STATIC
+    cli/functions_command.cpp
     cli/loc_command.cpp
     metrics/loc.cpp
     parse/command_line.cpp

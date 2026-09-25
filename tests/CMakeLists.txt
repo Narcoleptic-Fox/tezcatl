@@ -62,3 +62,45 @@ set_tests_properties(
 
 add_test(NAME cli.loc.missing_path_fails COMMAND tezcatl loc "${TEZCATL_FIXTURES_DIR}/no-such-dir")
 set_tests_properties(cli.loc.missing_path_fails PROPERTIES WILL_FAIL TRUE)
+
+# The full function list is asserted in unit/functions_test.cpp; this checks
+# the shipped binary end to end, including CSV quoting of a name with a comma.
+add_test(NAME cli.functions.fixture
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/functions" --root
+                 "${TEZCATL_FIXTURES_DIR}/functions")
+set_tests_properties(
+    cli.functions.fixture
+    PROPERTIES PASS_REGULAR_EXPRESSION
+               "\nshared\\.hpp,12,15,function,\"geo::area\\(size_t, size_t\\)\"\n")
+
+# A unit that fails to parse must fail the run, not shrink the report.
+add_test(NAME cli.functions.parse_error_fails
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/functions-broken" --root
+                 "${TEZCATL_FIXTURES_DIR}/functions-broken")
+set_tests_properties(cli.functions.parse_error_fails PROPERTIES WILL_FAIL TRUE)
+
+# The project's -Werror must not turn a warning (here an unused variable) into
+# a parse failure: warnings are build policy, not unparsed code.
+add_test(NAME cli.functions.werror_is_not_a_parse_error
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/functions-werror" --root
+                 "${TEZCATL_FIXTURES_DIR}/functions-werror")
+set_tests_properties(
+    cli.functions.werror_is_not_a_parse_error
+    PROPERTIES PASS_REGULAR_EXPRESSION
+               "werror\\.cpp,1,5,function,warns_but_parses\\(\\).*1 translation units, 0 with errors")
+
+add_test(NAME cli.functions.working_directory_fallback
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/functions-iprefix" --root
+                 "${TEZCATL_FIXTURES_DIR}/functions")
+set_tests_properties(
+    cli.functions.working_directory_fallback
+    PROPERTIES PASS_REGULAR_EXPRESSION
+               "include/util/detail\\.hpp,4,12,function,util::one\\(\\).*1 translation units, 0 with errors")
+
+add_test(NAME cli.functions.parse_error_reported
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/functions-broken" --root
+                 "${TEZCATL_FIXTURES_DIR}/functions-broken" --allow-parse-errors)
+set_tests_properties(
+    cli.functions.parse_error_reported
+    PROPERTIES PASS_REGULAR_EXPRESSION
+               "missing\\.hpp.*file not found.*broken\\.cpp,3,5,function,still_found\\(\\)")
