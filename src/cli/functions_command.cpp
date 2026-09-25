@@ -1,73 +1,79 @@
 #include "cli/functions_command.hpp"
 
-#include "parse/compilation_database.hpp"
 #include "parse/functions.hpp"
-#include "parse/translation_unit.hpp"
 #include "report/csv.hpp"
-#include "scan/paths.hpp"
 
-#include <cstddef>
+#include <format>
+#include <map>
 #include <ostream>
+#include <string>
 #include <vector>
 
 namespace tezcatl::cli {
 
-namespace fs = std::filesystem;
-
 namespace {
 
-// Enough to diagnose a broken unit without burying the rest of the output.
-constexpr std::size_t max_errors_shown_per_unit = 5;
+void write_summary_row(std::ostream& out, const std::string& module,
+                       const metrics::Distribution& distribution) {
+    out << report::csv_field(module) << ',' << distribution.count << ','
+        << std::format("{:.2f}", distribution.mean) << ','
+        << std::format("{:.1f}", distribution.median) << ',' << distribution.p90 << ','
+        << distribution.max << ',' << distribution.flagged << ',' << distribution.high << '\n';
+}
 
-void report_errors(const parse::ParsedUnit& parsed, std::ostream& err) {
-    std::size_t shown = 0;
-    for (const parse::ParseError& error : parsed.errors) {
-        if (shown++ == max_errors_shown_per_unit) {
-            err << "  ... and " << parsed.errors.size() - max_errors_shown_per_unit
-                << " more errors in " << parsed.file.generic_string() << '\n';
-            break;
-        }
-        err << "error: " << error.message << '\n';
+void write_summary(const Project& project, const std::vector<parse::FunctionInfo>& functions,
+                   const metrics::Thresholds& thresholds, std::ostream& out) {
+    std::map<std::string, std::vector<unsigned>> by_module;
+    std::vector<unsigned> all;
+    for (const parse::FunctionInfo& function : functions) {
+        by_module[project.module_of(function.file)].push_back(function.complexity);
+        all.push_back(function.complexity);
+    }
+    out << "module,functions,mean,median,p90,max,flagged,high\n";
+    for (const auto& [module, values] : by_module) {
+        write_summary_row(out, module, metrics::describe(values, thresholds));
+    }
+    write_summary_row(out, "TOTAL", metrics::describe(all, thresholds));
+}
+
+void write_functions(const Project& project, const std::vector<parse::FunctionInfo>& functions,
+                     const metrics::Thresholds& thresholds, std::ostream& out) {
+    out << "file,line,column,kind,name,module,complexity,rating\n";
+    for (const parse::FunctionInfo& function : functions) {
+        out << report::csv_field(project.relative(function.file)) << ',' << function.line << ','
+            << function.column << ',' << parse::to_string(function.kind) << ','
+            << report::csv_field(function.name) << ','
+            << report::csv_field(project.module_of(function.file)) << ',' << function.complexity
+            << ',' << metrics::to_string(metrics::rate(function.complexity, thresholds)) << '\n';
     }
 }
 
 } // namespace
 
-int run_functions(const FunctionsOptions& options, std::ostream& out, std::ostream& err) {
-    const fs::path root = fs::absolute(options.root).lexically_normal();
-    const fs::path build = fs::absolute(options.build_directory).lexically_normal();
-    const parse::FileFilter in_project = [&root, &build](const fs::path& file) {
-        return scan::is_within(file, root) && !scan::is_within(file, build);
-    };
-
-    const parse::Parser parser{options.resource_directory};
+int run_functions(const FunctionsOptions& options, const Streams& streams) {
+    std::ostream& out = streams.out;
+    std::ostream& err = streams.err;
+    metrics::validate(options.thresholds);
+    const Project project{options.project};
     std::vector<parse::FunctionInfo> functions;
-    std::size_t units = 0;
-    std::size_t units_with_errors = 0;
-    for (const parse::CompileCommand& command : parse::load_compilation_database(build)) {
-        const parse::ParsedUnit parsed = parser.parse(command);
-        ++units;
-        if (!parsed.errors.empty()) {
-            ++units_with_errors;
-            report_errors(parsed, err);
-        }
-        if (parsed.unit) {
-            auto found = parse::find_functions(parsed, in_project);
+    const ScanTotals totals = project.scan(
+        [&](const parse::ParsedUnit& parsed) {
+            auto found = parse::find_functions(parsed, project.in_project());
             functions.insert(functions.end(), found.begin(), found.end());
-        }
-    }
+        },
+        err);
     parse::merge_duplicates(functions);
 
-    out << "file,line,column,kind,name\n";
-    for (const parse::FunctionInfo& function : functions) {
-        out << report::csv_field(function.file.lexically_relative(root).generic_string()) << ','
-            << function.line << ',' << function.column << ',' << parse::to_string(function.kind)
-            << ',' << report::csv_field(function.name) << '\n';
+    if (options.summary) {
+        write_summary(project, functions, options.thresholds, out);
+    } else {
+        write_functions(project, functions, options.thresholds, out);
     }
-
-    err << "tezcatl: parsed " << units << " translation units, " << units_with_errors
-        << " with errors; " << functions.size() << " functions\n";
-    return (units_with_errors > 0 && !options.allow_parse_errors) ? 1 : 0;
+    return project.finish(totals,
+                          std::format("{} functions; complexity flagged over {}, high over {}",
+                                      functions.size(), options.thresholds.flagged_over,
+                                      options.thresholds.high_over),
+                          err);
 }
 
 } // namespace tezcatl::cli

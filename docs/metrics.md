@@ -89,3 +89,64 @@ selecting the same files):
 lines) come from a single rule: cloc counts a trailing splice backslash as code, so a line such
 as `    \` inside a multi-line macro, or `/* note */ \`, is code to cloc and blank or comment to
 Tezcatl. Each of the 11 files was checked line by line against this explanation.
+
+## Modules
+
+A **module** is a named set of files, given by a module map (`--modules FILE`), one rule per line:
+
+```text
+# comments and blank lines are ignored
+core tests = core/test/**
+core       = core/**
+io         = io/**
+```
+
+Globs are matched against paths relative to `--root`, with `/` separators and case-sensitively:
+`*` matches within one path component, `?` one character other than `/`, and `**` any run of
+characters including `/` (`src/**/x.c` also matches `src/x.c`). **The first matching rule
+wins**, so specific rules go first. A file no rule matches belongs to `(unassigned)`: it is
+reported under that name, never dropped.
+
+## Cyclomatic complexity
+
+McCabe's cyclomatic complexity, per function (every entry in *Functions*, including each
+lambda):
+
+**complexity = 1 + the number of decision points written in the function's definition.**
+
+| Counts 1 each | Does not count |
+|---|---|
+| `if` (so `else if` counts once, as its `if`) | `else`, `default`, `try`, `goto`, `return` |
+| `for`, range-based `for`, `while`, `do` | the `while` that ends a `do` loop |
+| `case` (each label, including stacked labels) | an overloaded `operator&&` or `operator\|\|` (a function call, which does not short-circuit) |
+| `catch` (each handler) | `&&` in a declaration such as `int&& r` |
+| `&&`, `\|\|` and their spellings `and`, `or`, including a fold expression `(pack && ...)` (one operator as written) | preprocessor conditions (`#if a && b`), and code the preprocessor disabled |
+| `?:`, and the GNU `a ?: b` | decisions inside a lambda or a local class's member function: those are functions of their own |
+
+- **Definition** means everything from the start of the declaration to the closing brace, so a
+  constructor's member initializers (`: v(a > 0 ? a : 0)`) count, and so do default arguments.
+- `if constexpr` counts: it is written as a decision, whichever branch a given instantiation
+  keeps. Function templates are measured once, as written, not per instantiation.
+- **Macros: what is written counts, not what expands.** A decision written in a macro's
+  *arguments* counts (`CHECK(a && b)` adds 1 for the `&&`); a decision inside a macro's
+  *body* does not (the `if` that `CHECK` expands to adds nothing), because it is not written in
+  the function and would otherwise make one line of code differ by platform (`assert` expands
+  to a branch in some C libraries, to nothing under `NDEBUG`). A function whose whole
+  definition comes from a macro has complexity 1.
+- In a template, `a && b` whose operands depend on a template parameter counts, even where an
+  overloaded `operator&&` is visible and the choice waits for instantiation: as written, it is a
+  logical operator. A call written as `operator&&(a, b)` is a call.
+- Each decision point is found as a token (`if`, `&&`, `?`, ...) and **confirmed by the AST**:
+  the token must belong to the construct it spells (an `if` statement, a built-in logical
+  operator, a conditional expression). Neither alone is enough: the tokens include `&&` in
+  `int&& r` and the `while` of a `do` loop, and the AST includes what macro bodies expand to.
+
+**Thresholds.** A function whose complexity is **over 10 is flagged**, and **over 20 is high**
+(both configurable with `--flag-over` and `--high-over`, and printed with every run). The
+`rating` column is `ok`, `flagged` or `high`.
+
+**Per module** (`tezcatl functions --summary`): the number of functions, the mean, the median
+(the mean of the two middle values when the count is even), the **90th percentile by nearest
+rank** (the value at position ⌈0.9 × n⌉ in ascending order, so always a value that occurs),
+the maximum, and how many functions are flagged (including high) and high. A final `TOTAL` row
+covers every module.

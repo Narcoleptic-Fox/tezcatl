@@ -80,7 +80,7 @@ add_test(NAME cli.functions.fixture
 set_tests_properties(
     cli.functions.fixture
     PROPERTIES PASS_REGULAR_EXPRESSION
-               "\nshared\\.hpp,12,15,function,\"geo::area\\(size_t, size_t\\)\"\n")
+               "\nshared\\.hpp,12,15,function,\"geo::area\\(size_t, size_t\\)\",\\(unassigned\\),1,ok\n")
 
 # A unit that fails to parse must fail the run, not shrink the report.
 add_test(NAME cli.functions.parse_error_fails
@@ -113,3 +113,31 @@ set_tests_properties(
     cli.functions.parse_error_reported
     PROPERTIES PASS_REGULAR_EXPRESSION
                "missing\\.hpp.*file not found.*broken\\.cpp,3,5,function,still_found\\(\\)")
+
+# Hand computed from the 26 values in tests/fixtures/complexity: sum 71 (mean
+# 2.73); sorted, the 13th and 14th are 2 (median) and the 24th is 5 (p90,
+# nearest rank ceil(0.9 * 26) = 24); max 12. Over 5: 6 and 12; over 11: 12. The custom
+# thresholds prove the options reach the summary.
+add_test(NAME cli.functions.summary
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/complexity" --root
+                 "${TEZCATL_FIXTURES_DIR}/complexity" --modules
+                 "${TEZCATL_FIXTURES_DIR}/complexity/modules.txt" --summary --flag-over 5
+                 --high-over 11)
+set_tests_properties(
+    cli.functions.summary
+    PROPERTIES PASS_REGULAR_EXPRESSION
+               "module,functions,mean,median,p90,max,flagged,high\nfixture,26,2\\.73,2\\.0,5,12,2,1\nTOTAL,26,2\\.73,2\\.0,5,12,2,1\n"
+)
+
+add_test(NAME cli.functions.complexity_rating
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/complexity" --root
+                 "${TEZCATL_FIXTURES_DIR}/complexity")
+set_tests_properties(
+    cli.functions.complexity_rating
+    PROPERTIES PASS_REGULAR_EXPRESSION
+               "\ncomplexity\\.cpp,[0-9]+,5,function,eleven\\(int\\),\\(unassigned\\),12,flagged\n")
+
+add_test(NAME cli.functions.rejects_inverted_thresholds
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/complexity" --flag-over 20
+                 --high-over 10)
+set_tests_properties(cli.functions.rejects_inverted_thresholds PROPERTIES WILL_FAIL TRUE)

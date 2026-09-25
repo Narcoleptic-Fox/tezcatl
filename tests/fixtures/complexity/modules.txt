@@ -1,0 +1,2 @@
+# Every function in the fixture is in one module.
+fixture = *.cpp
