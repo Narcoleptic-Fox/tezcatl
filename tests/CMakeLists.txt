@@ -35,6 +35,7 @@ add_executable(
     unit/glob_test.cpp
     unit/libclang_info_test.cpp
     unit/loc_test.cpp
+    unit/modules_test.cpp
     unit/paths_test.cpp
     unit/source_files_test.cpp
     unit/summary_test.cpp)

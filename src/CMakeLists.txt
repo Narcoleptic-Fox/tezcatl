@@ -4,6 +4,7 @@ add_library(
     tezcatl_core STATIC
     cli/functions_command.cpp
     cli/loc_command.cpp
+    config/modules.cpp
     metrics/complexity.cpp
     metrics/loc.cpp
     metrics/summary.cpp
