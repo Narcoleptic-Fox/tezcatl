@@ -106,6 +106,34 @@ comment only in another file) and 66 (every function in the .cpp and .c files wa
 redeclaration). Row 65 needed the second declaration of `add` for the same reason. The no-op
 control stayed green in both runs.
 
+### Coverage import, all confirmed 2026-09-25 on MSVC
+
+| # | Sabotage | Caught by |
+|---|---|---|
+| 70 | a repeated line replaces its hits instead of adding them (src/coverage/model.cpp) | the lcov merge test (line 3's second record has 0 hits) |
+| 71 | a line with 0 hits counts as covered | the lcov merge test |
+| 72 | an lcov branch never evaluated (`-`) counts as taken (src/coverage/lcov.cpp) | the lcov merge test |
+| 73 | lcov 2's `FN:<line>,<end>,<name>` keeps the end line in the name | the lcov merge test |
+| 74 | a relative SF path is not joined to the tracefile's directory | the lcov merge test |
+| 75 | a CRLF line ending is kept | the lcov merge test |
+| 76 | lcov 2.2's FNA records ignored | the lcov merge test |
+| 77 | gcov branches all given one id (src/coverage/json_readers.cpp) | the gcov merge test, the real-data oracle test |
+| 78 | gcov paths not resolved against the working directory | the real-data oracle test and the gcov merge test |
+| 79 | gcov's one-document-per-line output rejected | the real-data oracle test, the gcov merge test |
+| 80 | llvm-cov branches taken from its function totals | the llvm tests |
+| 81 | one file allowed in two llvm-cov exports | *llvm-cov totals are taken as they are, once per file* |
+| 82 | lcov line data allowed on top of llvm-cov totals | the same |
+| 83 | a rooted path such as `/src/a.c` joined to the tracefile's drive (src/coverage/model.cpp) | the real-data oracle test. **Windows only**: on Linux a rooted path is absolute, so this cannot fail there |
+| 84 | a file that is not coverage data reads as empty (src/coverage/read_file.cpp) | *a file that is not coverage data is an error* |
+| 85 | llvm-cov JSON read as gcov JSON | the real-data llvm test |
+| 86 | `--path-map` not applied (src/cli/coverage_command.cpp) | the three `cli.coverage` oracle tests |
+| 87 | a percentage with nothing to cover written as 0.0 | `cli.coverage.gcov_summary` (main has no branches) |
+| 88 | no file under the root exits 0 | `cli.coverage.nothing_under_root_fails` |
+| 89 | with no build directory, the current directory excludes everything under it (src/cli/project.cpp) | `cli.coverage.lcov_per_file`, which runs from the project root. It could not fail until then: CTest runs from the build tree |
+| 90 | path mappings matched by string prefix, not whole components (src/coverage/path_map.cpp) | *recorded paths move by whole components* |
+
+The no-op control stayed green in all three runs.
+
 ### Include graph, all confirmed 2026-09-25 on MSVC
 
 | # | Sabotage | Caught by |
