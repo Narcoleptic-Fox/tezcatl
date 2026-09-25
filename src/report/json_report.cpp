@@ -2,6 +2,8 @@
 
 #include "report/module_summary.hpp"
 
+#include <algorithm>
+#include <iterator>
 #include <nlohmann/json.hpp>
 #include <ostream>
 #include <string>
@@ -57,23 +59,23 @@ json module_row(const ModuleRow& row, bool with_includes) {
     return result;
 }
 
-json cycles(const graph::Digraph& graph, const std::vector<std::vector<std::size_t>>& found) {
+// A JSON array with one element per item.
+template <typename Items, typename ToJson> json array_of(const Items& items, ToJson to_json) {
     json result = json::array();
-    for (const std::vector<std::size_t>& cycle : found) {
-        json members = json::array();
-        for (const std::size_t node : cycle) {
-            members.push_back(graph.name(node));
-        }
-        result.push_back(members);
-    }
+    std::ranges::transform(items, std::back_inserter(result), to_json);
     return result;
 }
 
+json cycles(const graph::Digraph& graph, const std::vector<std::vector<std::size_t>>& found) {
+    return array_of(found, [&](const std::vector<std::size_t>& cycle) {
+        return array_of(cycle, [&](std::size_t node) { return json(graph.name(node)); });
+    });
+}
+
 json settings(const ReportData& data, const FileNaming& naming) {
-    json modules = json::array();
-    for (const config::ModuleRule& rule : naming.modules().rules()) {
-        modules.push_back({{"module", rule.module}, {"glob", rule.pattern}});
-    }
+    const json modules = array_of(naming.modules().rules(), [](const config::ModuleRule& rule) {
+        return json{{"module", rule.module}, {"glob", rule.pattern}};
+    });
     return {{"complexity",
              {{"flagged_over", data.thresholds.flagged_over},
               {"high_over", data.thresholds.high_over}}},
@@ -82,10 +84,9 @@ json settings(const ReportData& data, const FileNaming& naming) {
 }
 
 json input(const ReportData& data, const FileNaming& naming) {
-    json coverage_inputs = json::array();
-    for (const fs::path& file : data.provenance.coverage_inputs) {
-        coverage_inputs.push_back(file.generic_string());
-    }
+    const json coverage_inputs =
+        array_of(data.provenance.coverage_inputs,
+                 [](const fs::path& file) { return json(file.generic_string()); });
     return {{"root", naming.root().generic_string()},
             {"compilation_database", data.provenance.compilation_database.generic_string()},
             {"coverage", coverage_inputs},
@@ -94,83 +95,75 @@ json input(const ReportData& data, const FileNaming& naming) {
 }
 
 json files(const ReportData& data, const FileNaming& naming) {
-    json result = json::array();
-    for (const FileLines& file : data.files) {
-        result.push_back({{"path", naming.relative(file.file)},
-                          {"module", naming.module_of(file.file)},
-                          {"role", naming.role_of(file.file)},
-                          {"parsed", file.parsed},
-                          {"lines", lines(file.counts)}});
-    }
-    return result;
+    return array_of(data.files, [&](const FileLines& file) {
+        return json{{"path", naming.relative(file.file)},
+                    {"module", naming.module_of(file.file)},
+                    {"role", naming.role_of(file.file)},
+                    {"parsed", file.parsed},
+                    {"lines", lines(file.counts)}};
+    });
 }
 
 json functions(const ReportData& data, const FileNaming& naming) {
-    json result = json::array();
-    for (const parse::FunctionInfo& f : data.functions) {
+    return array_of(data.functions, [&](const parse::FunctionInfo& f) {
         const metrics::Halstead& h = f.halstead;
-        result.push_back(
-            {{"file", naming.relative(f.file)},
-             {"line", f.line},
-             {"column", f.column},
-             {"kind", parse::to_string(f.kind)},
-             {"name", f.name},
-             {"module", naming.module_of(f.file)},
-             {"role", naming.role_of(f.file)},
-             {"complexity", f.complexity},
-             {"rating", metrics::to_string(metrics::rate(f.complexity, data.thresholds))},
-             {"halstead",
-              {{"distinct_operators", h.distinct_operators},
-               {"distinct_operands", h.distinct_operands},
-               {"total_operators", h.total_operators},
-               {"total_operands", h.total_operands},
-               {"volume", h.volume()},
-               {"difficulty", h.difficulty()},
-               {"effort", h.effort()}}}});
-    }
-    return result;
+        return json{{"file", naming.relative(f.file)},
+                    {"line", f.line},
+                    {"column", f.column},
+                    {"kind", parse::to_string(f.kind)},
+                    {"name", f.name},
+                    {"module", naming.module_of(f.file)},
+                    {"role", naming.role_of(f.file)},
+                    {"complexity", f.complexity},
+                    {"rating", metrics::to_string(metrics::rate(f.complexity, data.thresholds))},
+                    {"halstead",
+                     {{"distinct_operators", h.distinct_operators},
+                      {"distinct_operands", h.distinct_operands},
+                      {"total_operators", h.total_operators},
+                      {"total_operands", h.total_operands},
+                      {"volume", h.volume()},
+                      {"difficulty", h.difficulty()},
+                      {"effort", h.effort()}}}};
+    });
 }
 
 json api(const ReportData& data, const FileNaming& naming) {
-    json result = json::array();
-    for (const parse::ApiEntity& e : data.api) {
-        result.push_back({{"file", naming.relative(e.file)},
-                          {"line", e.line},
-                          {"column", e.column},
-                          {"kind", parse::to_string(e.kind)},
-                          {"name", e.name},
-                          {"module", naming.module_of(e.file)},
-                          {"role", naming.role_of(e.file)},
-                          {"documentation", parse::to_string(e.documentation)}});
-    }
-    return result;
+    return array_of(data.api, [&](const parse::ApiEntity& e) {
+        return json{{"file", naming.relative(e.file)},
+                    {"line", e.line},
+                    {"column", e.column},
+                    {"kind", parse::to_string(e.kind)},
+                    {"name", e.name},
+                    {"module", naming.module_of(e.file)},
+                    {"role", naming.role_of(e.file)},
+                    {"documentation", parse::to_string(e.documentation)}};
+    });
 }
 
 json coverage(const ReportData& data, const FileNaming& naming) {
     if (!data.coverage.has_value()) {
         return nullptr;
     }
-    json result = json::array();
-    for (const auto& [file, counts] : data.coverage->files) {
-        result.push_back({{"file", naming.relative(file)},
-                          {"module", naming.module_of(file)},
-                          {"counts", coverage_counts(counts)}});
-    }
-    return result;
+    return array_of(data.coverage->files, [&](const auto& file_counts) {
+        const auto& [file, counts] = file_counts;
+        return json{{"file", naming.relative(file)},
+                    {"module", naming.module_of(file)},
+                    {"counts", coverage_counts(counts)}};
+    });
 }
 
 json includes(const IncludeGraph& graph) {
     json edges = json::array();
-    const graph::Digraph& files = graph.files;
-    for (std::size_t from = 0; from < files.size(); ++from) {
-        for (const std::size_t to : files.successors(from)) {
-            edges.push_back({{"from", files.name(from)}, {"to", files.name(to)}});
-        }
+    const graph::Digraph& file_graph = graph.files;
+    for (std::size_t from = 0; from < file_graph.size(); ++from) {
+        std::ranges::transform(
+            file_graph.successors(from), std::back_inserter(edges), [&](std::size_t to) {
+                return json{{"from", file_graph.name(from)}, {"to", file_graph.name(to)}};
+            });
     }
-    json coupling = json::array();
-    for (const ModuleCoupling& cell : graph.coupling) {
-        coupling.push_back({{"from", cell.from}, {"to", cell.to}, {"edges", cell.edges}});
-    }
+    const json coupling = array_of(graph.coupling, [](const ModuleCoupling& cell) {
+        return json{{"from", cell.from}, {"to", cell.to}, {"edges", cell.edges}};
+    });
     return {{"edges", edges},
             {"file_cycles", cycles(graph.files, graph.file_cycles)},
             {"module_cycles", cycles(graph.modules, graph.module_cycles)},
@@ -180,10 +173,8 @@ json includes(const IncludeGraph& graph) {
 } // namespace
 
 void write_report_json(std::ostream& out, const ReportData& data, const FileNaming& naming) {
-    json modules = json::array();
-    for (const ModuleRow& row : summarize_modules(data, naming)) {
-        modules.push_back(module_row(row, true));
-    }
+    const json modules = array_of(summarize_modules(data, naming),
+                                  [](const ModuleRow& row) { return module_row(row, true); });
     const json report = {{"schema", "tezcatl-report"},
                          {"schema_version", report_schema_version},
                          {"tool",

@@ -7,8 +7,8 @@
 
 namespace tezcatl::graph {
 
-bool Digraph::contains(const std::string& name) const {
-    return std::ranges::binary_search(names_, name);
+bool Digraph::contains(const std::string& node_name) const {
+    return std::ranges::binary_search(names_, node_name);
 }
 
 Digraph::Digraph(const std::vector<Edge>& edges, const std::vector<std::string>& isolated)
