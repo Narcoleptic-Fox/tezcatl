@@ -32,6 +32,7 @@ add_library(
     parse/translation_unit.cpp
     report/csv.cpp
     report/include_graph.cpp
+    report/module_summary.cpp
     report/naming.cpp
     report/tables.cpp
     scan/glob.cpp

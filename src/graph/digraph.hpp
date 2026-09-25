@@ -14,6 +14,8 @@ class Digraph {
 public:
     using Edge = std::pair<std::string, std::string>;
 
+    /// An empty graph.
+    Digraph() = default;
     /// Nodes are the endpoints of `edges` plus `isolated` (nodes that may
     /// have no edges, such as a source file nothing includes). Repeated
     /// nodes and edges are merged. A self-edge is kept.
