@@ -226,6 +226,54 @@ D = 3.5 × 5/3 = 5.83 and E = 271.29.
 not, so it is reported per function only). Halstead's other derived estimates (time to program,
 delivered bugs) rest on constants calibrated for other languages and are not reported.
 
+## Documentation coverage
+
+`tezcatl docs` measures how much of the project's **public API** has a comment attached, per
+declaration and per module (`--summary`).
+
+**The API** is what the project declares in its headers (`.h`, `.hh`, `.hpp`, `.hxx`, `.h++`,
+`.inl`, `.ipp`, `.tpp`, `.tcc`, under `--root`, not system headers), as the compiler sees it:
+
+| Counted | Kind |
+|---|---|
+| free functions and function templates with external linkage | `function` |
+| public member functions, constructors, destructors, conversions | `method` |
+| public data members, static or not (every member of a C struct) | `field` |
+| variables with external linkage (`extern int n;`) | `variable` |
+| named class, struct, union and enum definitions, and class templates | `type` |
+| `typedef` and `using` aliases | `type_alias` |
+
+Not counted: anything in an anonymous namespace or declared `static`; private and protected
+members, and everything inside a type that is not public; `= default` and `= delete` functions,
+which need no documentation of their own; forward declarations, and any declaration after a
+thing's first (so a function declared twice counts once); enumerators; declarations in `.c` and
+`.cpp` files. A struct defined inside a typedef (`typedef struct { ... } name_t;`) is one type,
+counted as the typedef.
+
+**Documented** means a comment is attached to the declaration, in the same file, either
+**before it** with no other declaration in between, or **trailing it** (`int x; ///< ...` or
+`size_t n; /* ... */`). Blank lines and attributes between a comment and its declaration are
+fine. The **style** column says which kind:
+
+- `doxygen`: a comment that opens with `///`, `//!`, `/**` or `/*!`;
+- `plain`: any other comment. Much C code, Earthworm's included, documents its functions with
+  ordinary `/* ... */` blocks, so these count as documentation; the column lets a reader tell
+  them apart.
+
+Two rules differ from what libclang would attach by itself, which attaches a comment across any
+text except `;`, `{`, `}`, `#` and `@`:
+
+- a comment above `DECLARE(f)`, a macro that declares something, is `f`'s; libclang also attaches
+  it to the next declaration after the macro, which Tezcatl does not;
+- a comment on a function's definition in a `.cpp` file does not document the header's
+  declaration, although libclang attaches it as a comment of a redeclaration: the header is where
+  a reader of the API looks.
+
+Limits: a comment is attached by position, not by what it says, so a licence block or a
+`// ---- section ----` banner directly above a declaration counts as documenting it (a `#`
+directive in between, as in most licence headers followed by an include guard, prevents that).
+Whether a comment is *good* documentation is for a reviewer, not a metric.
+
 ## Include dependencies
 
 `tezcatl includes` builds the `#include` graph at file level. Each directive is resolved by the

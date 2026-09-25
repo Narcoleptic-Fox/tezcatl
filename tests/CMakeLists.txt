@@ -168,6 +168,30 @@ add_test(NAME cli.functions.rejects_inverted_thresholds
                  --high-over 10)
 set_tests_properties(cli.functions.rejects_inverted_thresholds PROPERTIES WILL_FAIL TRUE)
 
+# Documentation coverage of tests/fixtures/docs, from the verdicts listed in
+# unit/api_test.cpp: api.hpp (module cpp) has 17 declarations, 11 documented,
+# 10 of them doxygen; c_api.h (module c) 9, 4 and 1; elsewhere.hpp is
+# unassigned with 1 undocumented. 11/17 = 64.7%, 4/9 = 44.4%, 15/27 = 55.6%.
+set(DOCS_ARGS -p "${TEZCATL_FIXTURE_DBS}/docs" --root "${TEZCATL_FIXTURES_DIR}/docs" --modules
+              "${TEZCATL_FIXTURES_DIR}/docs/modules.txt")
+add_test(NAME cli.docs.summary COMMAND tezcatl docs ${DOCS_ARGS} --summary)
+set_tests_properties(
+    cli.docs.summary
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION
+        "^module,entities,documented,percent,doxygen\n\\(unassigned\\),1,0,0\\.0,0\nc,9,4,44\\.4,1\ncpp,17,11,64\\.7,10\nTOTAL,27,15,55\\.6,11\n"
+)
+
+# One row per declaration: a plain comment, and the declaration whose
+# libclang-attached comment belongs to the macro-made declaration above it.
+add_test(NAME cli.docs.declarations COMMAND tezcatl docs ${DOCS_ARGS})
+set_tests_properties(
+    cli.docs.declarations
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION
+        "\ninclude/api\\.hpp,13,5,function,\"subtract\\(int, int\\)\",cpp,yes,plain\n.*\ninclude/api\\.hpp,61,25,function,identity\\(T\\),cpp,no,none\n"
+)
+
 # The include graph of tests/fixtures/includes, every table hand computed from
 # its #include lines (listed in unit/includes_test.cpp). The module map puts
 # ring/ and shared/ in modules of those names; the rest is unassigned.

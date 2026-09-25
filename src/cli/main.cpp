@@ -1,3 +1,4 @@
+#include "cli/docs_command.hpp"
 #include "cli/functions_command.hpp"
 #include "cli/includes_command.hpp"
 #include "cli/loc_command.hpp"
@@ -88,6 +89,13 @@ int run(int argc, char** argv) {
     functions->add_flag("--summary", functions_options.summary,
                         "One row per module (count, mean, median, p90, max, over thresholds)");
 
+    tezcatl::cli::DocsOptions docs_options{.project = default_project_options(), .summary = false};
+    CLI::App* docs = app.add_subcommand(
+        "docs", "Documentation coverage of the public API declared in the project's headers.");
+    add_project_options(*docs, docs_options.project);
+    docs->add_flag("--summary", docs_options.summary,
+                   "One row per module (declarations, documented, percent, doxygen)");
+
     tezcatl::cli::IncludesOptions includes_options{.project = default_project_options(),
                                                    .output = tezcatl::cli::IncludesOutput::edges};
     CLI::App* includes = app.add_subcommand(
@@ -115,6 +123,9 @@ int run(int argc, char** argv) {
     }
     if (functions->parsed()) {
         return tezcatl::cli::run_functions(functions_options, {.out = std::cout, .err = std::cerr});
+    }
+    if (docs->parsed()) {
+        return tezcatl::cli::run_docs(docs_options, {.out = std::cout, .err = std::cerr});
     }
     if (includes->parsed()) {
         return tezcatl::cli::run_includes(includes_options, {.out = std::cout, .err = std::cerr});
