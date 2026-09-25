@@ -11,6 +11,18 @@ the check.
 | 2 | `main` swallows a CLI parse error and exits 0 (src/cli/main.cpp) | `cli.rejects_unknown_flag` | 2026-09-24, MSVC |
 | 3 | Null pointer dereference added to src/parse/libclang_info.cpp | cppcheck `nullPointer` via `scripts/lint.sh` | 2026-09-24, cppcheck 2.22 |
 
+### Lines of code (src/metrics/loc.cpp), all confirmed 2026-09-24 on MSVC
+
+| # | Sabotage | Caught by (loc_test.cpp test case) |
+|---|---|---|
+| 4 | `finish_line` records comment lines as code | every test case (17 assertions) |
+| 5 | `splice_length` never finds a splice | *line splices* |
+| 6 | `is_raw_string_prefix` never matches | *raw string literals* |
+| 7 | the digit-separator branch never taken | *digit separators are not character literals* |
+| 8 | backslash escapes in literals ignored | *comment markers inside literals are not comments* |
+| 9 | the UTF-8 byte order mark not skipped | *a UTF-8 byte order mark is not code* |
+| 10 | `/` after an opener's own `*` closes the comment | *block comments span lines...* |
+
 Checks that have caught real defects (so they are known to fire):
 
 | Check | Defect it caught | Date |

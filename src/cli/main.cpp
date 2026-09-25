@@ -1,3 +1,4 @@
+#include "cli/loc_command.hpp"
 #include "parse/libclang_info.hpp"
 #include "tezcatl/version.hpp"
 
@@ -6,7 +7,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
+#include <iostream>
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -26,7 +30,25 @@ int run(int argc, char** argv) {
                " (libclang: " + tezcatl::parse::libclang_version() + ")";
     });
 
+    app.require_subcommand(0, 1);
+
+    std::vector<std::filesystem::path> loc_inputs;
+    CLI::App* loc = app.add_subcommand(
+        "loc", "Count physical, blank, comment and code lines; writes CSV to stdout.");
+    loc->add_option("paths", loc_inputs, "Source files or directories (searched recursively)")
+        ->required();
+    bool loc_by_line = false;
+    loc->add_flag("--lines", loc_by_line, "Classify every physical line instead of totalling");
+
     CLI11_PARSE(app, argc, argv);
+
+    if (loc->parsed()) {
+        if (loc_by_line) {
+            tezcatl::cli::run_loc_lines(loc_inputs, std::cout);
+        } else {
+            tezcatl::cli::run_loc(loc_inputs, std::cout);
+        }
+    }
     return EXIT_SUCCESS;
 }
 

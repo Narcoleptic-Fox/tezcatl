@@ -25,3 +25,15 @@ set_tests_properties(
 
 add_test(NAME cli.rejects_unknown_flag COMMAND tezcatl --no-such-flag)
 set_tests_properties(cli.rejects_unknown_flag PROPERTIES WILL_FAIL TRUE)
+
+# Hand count of tests/fixtures/loc (physical,blank,comment,code):
+#   sample.cpp 12,2,5,5   sample.hpp 4,1,1,2   notes.txt is not source.
+add_test(NAME cli.loc.fixture_totals COMMAND tezcatl loc "${TEZCATL_FIXTURES_DIR}/loc")
+set_tests_properties(
+    cli.loc.fixture_totals
+    PROPERTIES PASS_REGULAR_EXPRESSION
+               "^file,physical,blank,comment,code\n[^\n]*/sample\\.cpp,12,2,5,5\n[^\n]*/sample\\.hpp,4,1,1,2\nTOTAL,16,3,6,7\n$"
+)
+
+add_test(NAME cli.loc.missing_path_fails COMMAND tezcatl loc "${TEZCATL_FIXTURES_DIR}/no-such-dir")
+set_tests_properties(cli.loc.missing_path_fails PROPERTIES WILL_FAIL TRUE)
