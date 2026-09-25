@@ -4,6 +4,7 @@ set(TEZCATL_FIXTURES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
 
 add_executable(
     tezcatl_tests
+    unit/command_line_test.cpp
     unit/csv_test.cpp
     unit/libclang_info_test.cpp
     unit/loc_test.cpp
