@@ -6,6 +6,7 @@ add_library(
     metrics/loc.cpp
     parse/libclang_info.cpp
     report/csv.cpp
+    scan/paths.cpp
     scan/source_files.cpp)
 add_library(tezcatl::core ALIAS tezcatl_core)
 target_include_directories(tezcatl_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
