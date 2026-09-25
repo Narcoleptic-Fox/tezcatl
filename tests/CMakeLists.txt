@@ -84,7 +84,7 @@ add_test(NAME cli.functions.fixture
 set_tests_properties(
     cli.functions.fixture
     PROPERTIES PASS_REGULAR_EXPRESSION
-               "\nshared\\.hpp,12,15,function,\"geo::area\\(size_t, size_t\\)\",\\(unassigned\\),1,ok\n")
+               "\nshared\\.hpp,12,15,function,\"geo::area\\(size_t, size_t\\)\",\\(unassigned\\),1,ok,")
 
 # A unit that fails to parse must fail the run, not shrink the report.
 add_test(NAME cli.functions.parse_error_fails
@@ -130,8 +130,29 @@ add_test(NAME cli.functions.summary
 set_tests_properties(
     cli.functions.summary
     PROPERTIES PASS_REGULAR_EXPRESSION
-               "module,functions,mean,median,p90,max,flagged,high\nfixture,26,2\\.73,2\\.0,5,12,2,1\nTOTAL,26,2\\.73,2\\.0,5,12,2,1\n"
+               "module,functions,mean,median,p90,max,flagged,high,volume,effort\nfixture,26,2\\.73,2\\.0,5,12,2,1,[0-9]+\\.[0-9][0-9],[0-9]+\\.[0-9][0-9]\nTOTAL,26,2\\.73,2\\.0,5,12,2,1,"
 )
+
+# Hand computed in tests/fixtures/halstead/halstead.cpp: add has n1 7, n2 3,
+# N1 9, N2 5, so V = 14 log2 10 = 46.51, D = 7/2 * 5/3 = 5.83, E = 271.29.
+add_test(NAME cli.functions.halstead
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/halstead" --root
+                 "${TEZCATL_FIXTURES_DIR}/halstead")
+set_tests_properties(
+    cli.functions.halstead
+    PROPERTIES PASS_REGULAR_EXPRESSION
+               "\nhalstead\\.cpp,6,5,function,\"add\\(int, int\\)\",\\(unassigned\\),1,ok,7,3,9,5,46\\.51,5\\.83,271\\.29\n")
+
+# The module sums of the fixture's five functions, by hand: complexities
+# 1 2 1 1 1 (mean 1.20, median 1, p90 2); volume 46.507 + 76 + 33 + 49.829 +
+# 30 = 235.34; effort 271.291 + 585.2 + 110 + 290.669 + 315 = 1572.16.
+add_test(NAME cli.functions.halstead_summary
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/halstead" --root
+                 "${TEZCATL_FIXTURES_DIR}/halstead" --summary)
+set_tests_properties(
+    cli.functions.halstead_summary
+    PROPERTIES PASS_REGULAR_EXPRESSION
+               "\n\\(unassigned\\),5,1\\.20,1\\.0,2,2,0,0,235\\.34,1572\\.16\nTOTAL,")
 
 add_test(NAME cli.functions.complexity_rating
          COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/complexity" --root
@@ -139,7 +160,7 @@ add_test(NAME cli.functions.complexity_rating
 set_tests_properties(
     cli.functions.complexity_rating
     PROPERTIES PASS_REGULAR_EXPRESSION
-               "\ncomplexity\\.cpp,[0-9]+,5,function,eleven\\(int\\),\\(unassigned\\),12,flagged\n")
+               "\ncomplexity\\.cpp,[0-9]+,5,function,eleven\\(int\\),\\(unassigned\\),12,flagged,")
 
 add_test(NAME cli.functions.rejects_inverted_thresholds
          COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/complexity" --flag-over 20

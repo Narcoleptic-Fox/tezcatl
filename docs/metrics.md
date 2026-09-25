@@ -190,6 +190,42 @@ covered by a fixture: template bodies skipped under clang-cl before C++20 (180 f
 missing), `= default` functions reported when the compiler defines them (63 extra), and a
 dependent `&&` in a template not counted (2 functions under-counted).
 
+## Halstead
+
+Halstead's measures, per function, from the same tokens as complexity: the function's own
+tokens as written, excluding nested lambdas and local-class member functions (measured on their
+own), preprocessor directive lines, and code a false `#if` removed.
+
+| Token | Counts as |
+|---|---|
+| keywords (`int`, `return`, `if`, `const`, `sizeof`, ...) | operator |
+| punctuation (`+`, `=`, `;`, `,`, `::`, `->`, `<`, `>`, ...) | operator |
+| a bracket pair `()`, `[]`, `{}` | **one** operator, counted at the opening bracket; closers do not count |
+| identifiers (variables, functions, types, macro names) | operand |
+| literals (numbers, strings, characters) | operand |
+| the keywords that name values: `true`, `false`, `nullptr`, `this` | operand |
+| comments | nothing |
+
+Tokens are counted as the lexer produces them: `>>` closing two template argument lists is one
+operator, and a macro call counts its name and its arguments as written, not its expansion.
+Operators and operands are distinct when their spellings differ.
+
+With n1, n2 the distinct and N1, N2 the total operators and operands, n = n1 + n2 and
+N = N1 + N2:
+
+- **volume** V = N × log2(n), and 0 when n < 2;
+- **difficulty** D = (n1 / 2) × (N2 / n2), and 0 when there are no operands;
+- **effort** E = D × V.
+
+For example `int add(int a, int b) { return a + b; }` has operators `int ( int , int { return +
+;` (N1 = 9, n1 = 7) and operands `add a b a b` (N2 = 5, n2 = 3), so V = 14 log2 10 = 46.51,
+D = 3.5 × 5/3 = 5.83 and E = 271.29.
+
+`tezcatl functions` reports the four counts and the three measures for every function, and
+`--summary` adds each module's total volume and total effort (both are additive; difficulty is
+not, so it is reported per function only). Halstead's other derived estimates (time to program,
+delivered bugs) rest on constants calibrated for other languages and are not reported.
+
 ## Include dependencies
 
 `tezcatl includes` builds the `#include` graph at file level. Each directive is resolved by the
