@@ -39,6 +39,61 @@ the check.
 | 19a | the clang-cl source file not marked with /Tp | only on Linux, where the clang-cl fixture's absolute path begins with an option letter (`/w/...` in the container, `/opt/...` on the runner); on Windows the path is `D:\...` and cannot be misread. The unit test *clang-cl names the source file with its language* catches it everywhere |
 | 20 | `-Wno-error` not appended | `cli.functions.werror_is_not_a_parse_error` and the clang-cl fixture (`/WX`) |
 
+### Cyclomatic complexity and module summaries, all confirmed 2026-09-25 on MSVC
+
+"The fixture" is *cyclomatic complexity matches the hand counts in the fixture*, which runs on
+both the GCC-style and the clang-cl database.
+
+| # | Sabotage | Caught by |
+|---|---|---|
+| 21 | `&&` never a decision point (src/metrics/complexity.cpp) | the fixture, `cli.functions.summary` |
+| 22 | decisions in nested lambdas and local classes not excluded | the fixture, `cli.functions.summary` |
+| 23 | `-Xclang -detailed-preprocessing-record` not passed (the libclang option alone, which a GCC-mode `--` disables) | the fixture, both include tests, `cli.functions.summary` and all five `cli.includes.*` table tests |
+| 24 | tokens lexed from the raw extent instead of the written range (a macro-made function lexed from its `#define`) | the fixture, `cli.functions.summary` |
+| 25 | the `while` of a do-while counted as well as its `do` | the fixture, `cli.functions.summary` |
+| 26 | every `&&` token counted, without the AST check (rvalue references, `operator&&`) | the fixture, `cli.functions.summary` |
+| 27 | the GNU `a ?: b` not counted | the fixture, `cli.functions.summary` |
+| 28 | `-fno-delayed-template-parsing` not passed | the fixture, clang-cl database only (template bodies vanish below C++20) |
+| 29 | a dependent `&&` (unresolved, `OverloadedDeclRef`) not counted | the fixture, `cli.functions.summary` |
+| 30 | a fold expression over `&&` not counted | the fixture, `cli.functions.summary` |
+| 31 | `= default` functions reported when clang synthesizes their bodies (src/parse/functions.cpp) | *every function definition in the fixture project is found* |
+| 32 | ratings inclusive (`>=` instead of `>`) (src/metrics/summary.cpp) | *ratings use strict thresholds*, *the distribution of a set of values*, `cli.functions.summary` |
+| 33 | p90 rank rounded to nearest instead of ceiling | *p90 by nearest rank at the boundaries*, `cli.functions.summary` |
+| 34 | p90 rank truncated | *p90 by nearest rank at the boundaries*, *the distribution of a set of values*, `cli.functions.summary` |
+| 35 | even-count median takes the upper middle value | *the distribution of a set of values* |
+| 36 | inverted thresholds accepted (src/cli/functions_command.cpp) | `cli.functions.rejects_inverted_thresholds` |
+| 37 | glob `*` crosses `/` (src/scan/glob.cpp) | *\* stays within one path component* |
+| 38 | glob `**/` never matches zero directories | *\*\* crosses path components* |
+| 39 | the last matching module rule wins (src/config/modules.cpp) | *the first matching rule names the module* |
+
+### Include graph, all confirmed 2026-09-25 on MSVC
+
+| # | Sabotage | Caught by |
+|---|---|---|
+| 40 | only directives in the main file (so guard-skipped headers lose their edges) (src/parse/includes.cpp) | *every include edge in the fixture project is found* and all five `cli.includes.*` table tests |
+| 41 | directives inside system headers kept | *directives inside system headers are never edges, whatever the filter* |
+| 42 | Tarjan: low link not passed up to the parent (src/graph/digraph.cpp) | three graph tests including the 200,000-node ring, `cli.includes.cycles`, `.files`, `.dot` |
+| 43 | Tarjan: edges to nodes no longer on the stack lower the low link | *a diamond, a self-edge and an empty graph have no cycles*, *separate cycles are reported separately* |
+| 44 | components of one node reported as cycles | two graph tests, `cli.includes.cycles`, `.files`, `.modules` |
+| 45 | repeated edges kept | *nodes are numbered in name order and repeats merge*, `cli.includes.cycles`, `.files`, `.modules`, `.coupling` |
+| 46 | edges within a module count toward module fan-in, fan-out and cycles (src/cli/includes_command.cpp) | `cli.includes.modules` |
+| 47 | cycle edges not drawn red in DOT | `cli.includes.dot` |
+| 48 | source files with no includes are not nodes | `cli.includes.cycles`, `.files`, `.modules` |
+
+**Control:** a sabotage that only adds a comment must leave every test green, and does. The
+harness deletes the sabotaged file's object before building and refuses a result if it was not
+rebuilt: one run reported a green that turned out to be a stale binary.
+
+**Tests that could not fail, found by this log** (each fixed, then its sabotage re-run red):
+
+| Found by | Why it could not fail | Fix |
+|---|---|---|
+| 33 | every count tested (1, 10, 11, 12, 21) has ⌈0.9n⌉ equal to round(0.9n) | a 6-value case (0.9 × 6 = 5.4) |
+| 47, and 44 against `cli.includes.cycles` | a `;` in `PASS_REGULAR_EXPRESSION` splits it into a list, and CTest passes if any part matches; the cycles regex contained the bare fragment `ring/b\.h` | `;` written as `[;]`, and tests/CMakeLists.txt refuses any pass regex that splits (sabotaged: a bare `;` stops the configure) |
+| 48 | every source file in the fixture also had an include edge | `lone.cpp`, which includes nothing |
+| 41 | the project filter already excluded system headers | a test whose filter accepts everything |
+| a guard against `operator&&` as a name counting | libclang annotates that `&&` as a `DeclRefExpr`, never `OverloadedDeclRef`, so the guard never ran | guard removed; *call_by_name* in the fixture pins the behaviour |
+
 Tried and found to change nothing, so not a check: spelling the resource directory
 `/clang:-resource-dir=` versus `-resource-dir=` in clang-cl mode. Both work, so only the plain
 spelling is used.
@@ -51,3 +106,7 @@ Checks that have caught real defects (so they are known to fire):
 | clang-tidy `cppcoreguidelines-pro-bounds-avoid-unchecked-container-access` | unchecked `operator[]` in a test | 2026-09-24 |
 | clang-tidy `cert-err33-c` | ignored `fputs` results in the fatal-error path | 2026-09-24 |
 | clang-format `--dry-run --Werror` | unformatted line in src/cli/main.cpp | 2026-09-24 |
+| clang-tidy `bugprone-easily-swappable-parameters` | `out` and `err` streams passable in either order; a table on stderr would pass every CLI test, which reads both streams together | 2026-09-25 |
+| clang-tidy `readability-function-cognitive-complexity` | Tarjan's loop (27) and the glob matcher (34), both split | 2026-09-25 |
+| cppcheck `uninitMemberVarNoCtor` | Tarjan's frame had an uninitialised node member | 2026-09-25 |
+| the lizard comparison on Catch2 (docs/metrics.md) | template bodies skipped under clang-cl (180 functions), `= default` reported (63), dependent `&&` not counted (2) | 2026-09-25 |
