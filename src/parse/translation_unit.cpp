@@ -57,12 +57,19 @@ ParsedUnit Parser::parse(const CompileCommand& command) const {
     //   libclang implements it by appending these same two arguments after
     //   the caller's, where the GCC-mode "--" before the source file turns
     //   them into file names and the record silently disappears (measured
-    //   with LLVM 22.1.3). Passed here, they come before the "--".
+    //   with LLVM 22.1.3). Passed here, they come before the "--";
+    // - "-fno-delayed-template-parsing". clang-cl before C++20 does not parse
+    //   the body of a template until it is instantiated, as MSVC does, so an
+    //   uninstantiated function template or member of a class template has no
+    //   body in the AST and would silently vanish from the report (measured:
+    //   Catch2 built as C++14 lost its template member functions). Accepted
+    //   by both drivers.
     std::vector<std::string> extra_options;
     if (!resource_directory_.empty()) {
         extra_options.push_back("-resource-dir=" + resource_directory_.string());
     }
     extra_options.emplace_back("-Wno-error");
+    extra_options.emplace_back("-fno-delayed-template-parsing");
     extra_options.emplace_back("-Xclang");
     extra_options.emplace_back("-detailed-preprocessing-record");
     const std::vector<std::string> arguments = portable_arguments(command, extra_options);

@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["cl.exe", "/nologo", "/TP", "/std:c++17", "/EHsc", "/c", "complexity.cpp"],
+    "file": "complexity.cpp"
+  }
+]

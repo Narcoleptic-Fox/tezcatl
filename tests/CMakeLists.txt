@@ -20,6 +20,11 @@ configure_file("${FIXTURE_DIR}/compile_commands.cl.json.in"
 # -iwithprefixbefore), which only the working-directory fallback can resolve.
 configure_file("${FIXTURE_DIR}/compile_commands.iprefix.json.in"
                "${TEZCATL_FIXTURE_DBS}/functions-iprefix/compile_commands.json" @ONLY)
+# The complexity fixture as a clang-cl C++17 command, where template bodies
+# are not parsed until instantiated unless Tezcatl says otherwise.
+set(FIXTURE_DIR "${TEZCATL_FIXTURES_DIR}/complexity")
+configure_file("${FIXTURE_DIR}/compile_commands.cl.json.in"
+               "${TEZCATL_FIXTURE_DBS}/complexity-cl/compile_commands.json" @ONLY)
 
 add_executable(
     tezcatl_tests

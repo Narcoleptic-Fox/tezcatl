@@ -21,6 +21,9 @@ the project's own compile flags from `compile_commands.json`.
 - Declarations, `= default` and `= delete` have no body and are not functions for this purpose,
   including a defaulted function that the compiler defines itself (out of line, or because it is
   used): that body is not written in the project.
+- Templates are measured as written, whether or not anything instantiates them. clang-cl before
+  C++20 normally skips the bodies of uninstantiated templates, as MSVC does; Tezcatl turns that
+  off, so an MSVC C++14 project loses no template code.
 - Names are qualified with their namespaces and classes and carry their parameter types
   (`geo::area(size_t, size_t)`), which keeps overloads apart. Template parameters are not
   spelled: a function template reads `scaled(T)`.

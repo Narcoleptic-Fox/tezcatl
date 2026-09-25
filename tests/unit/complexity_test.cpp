@@ -3,6 +3,7 @@
 #include "parse/translation_unit.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 #include <algorithm>
 #include <filesystem>
@@ -13,8 +14,13 @@ namespace fs = std::filesystem;
 using namespace tezcatl::parse;
 
 TEST_CASE("cyclomatic complexity matches the hand counts in the fixture", "[complexity]") {
+    // The same source as a GCC-style C++20 command and as a clang-cl C++17
+    // one; clang-cl before C++20 delays parsing template bodies by default.
+    const fs::path database = GENERATE(fs::path{TEZCATL_FIXTURE_DBS} / "complexity",
+                                       fs::path{TEZCATL_FIXTURE_DBS} / "complexity-cl");
+    INFO(database.string());
     const Parser parser{default_resource_directory()};
-    const auto commands = load_compilation_database(fs::path{TEZCATL_FIXTURE_DBS} / "complexity");
+    const auto commands = load_compilation_database(database);
     REQUIRE(commands.size() == 1);
     const ParsedUnit parsed = parser.parse(commands.at(0));
     REQUIRE(parsed.errors.empty());
