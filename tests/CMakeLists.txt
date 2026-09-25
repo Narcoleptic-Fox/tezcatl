@@ -34,6 +34,7 @@ add_executable(
     unit/functions_test.cpp
     unit/glob_test.cpp
     unit/graph_test.cpp
+    unit/halstead_test.cpp
     unit/includes_test.cpp
     unit/libclang_info_test.cpp
     unit/loc_test.cpp

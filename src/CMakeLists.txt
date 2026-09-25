@@ -9,6 +9,7 @@ add_library(
     config/modules.cpp
     graph/digraph.cpp
     metrics/complexity.cpp
+    metrics/halstead.cpp
     metrics/loc.cpp
     metrics/summary.cpp
     parse/command_line.cpp
