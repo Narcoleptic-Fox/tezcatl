@@ -196,3 +196,18 @@ set_tests_properties(
 add_test(NAME cli.includes.rejects_unknown_output COMMAND tezcatl includes ${INCLUDES_ARGS} --output
                                                         pie)
 set_tests_properties(cli.includes.rejects_unknown_output PROPERTIES WILL_FAIL TRUE)
+
+# A property value is a list, so a ";" in PASS_REGULAR_EXPRESSION splits it into
+# several regexes, and CTest passes a test when any one of them matches: a
+# fragment such as "ring/b\.h" passes nearly any output. That made two of the
+# tests above unable to fail until it was found by sabotage. Write ";" as "[;]"
+# (CMake does not split a list inside square brackets); this refuses the rest.
+get_property(tezcatl_all_tests DIRECTORY PROPERTY TESTS)
+foreach(test_name IN LISTS tezcatl_all_tests)
+    get_test_property("${test_name}" PASS_REGULAR_EXPRESSION pass_regex)
+    list(LENGTH pass_regex regex_count)
+    if(pass_regex AND regex_count GREATER 1)
+        message(FATAL_ERROR "test ${test_name}: PASS_REGULAR_EXPRESSION is a list of "
+                            "${regex_count} regexes (a ';' split it); write ';' as '[;]'")
+    endif()
+endforeach()
