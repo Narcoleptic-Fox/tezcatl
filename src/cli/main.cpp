@@ -3,17 +3,20 @@
 #include "cli/functions_command.hpp"
 #include "cli/includes_command.hpp"
 #include "cli/loc_command.hpp"
+#include "cli/report_command.hpp"
 #include "parse/libclang_info.hpp"
 #include "parse/translation_unit.hpp"
 #include "tezcatl/version.hpp"
 
 #include <CLI/CLI.hpp>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <string>
 #include <vector>
@@ -58,6 +61,27 @@ void add_project_options(CLI::App& command, tezcatl::cli::ProjectOptions& option
                      "Exit 0 even if some translation units failed to parse");
 }
 
+void add_threshold_options(CLI::App& command, tezcatl::metrics::Thresholds& thresholds) {
+    command.add_option("--flag-over", thresholds.flagged_over, "Complexity above this is flagged")
+        ->capture_default_str();
+    command.add_option("--high-over", thresholds.high_over, "Complexity above this is high")
+        ->capture_default_str();
+}
+
+void add_path_map_option(CLI::App& command, std::vector<std::string>& texts) {
+    command.add_option("--path-map", texts,
+                       "FROM=TO: source paths recorded under FROM are found under TO");
+}
+
+std::vector<tezcatl::coverage::PathMapping> parse_path_maps(const std::vector<std::string>& texts) {
+    std::vector<tezcatl::coverage::PathMapping> mappings;
+    mappings.reserve(texts.size());
+    std::ranges::transform(texts, std::back_inserter(mappings), [](const std::string& text) {
+        return tezcatl::coverage::parse_path_mapping(text);
+    });
+    return mappings;
+}
+
 int run(int argc, char** argv) {
     CLI::App app{"Measures a C/C++ codebase and writes a code metrics baseline report.", "tezcatl"};
     app.set_version_flag("--version", [] {
@@ -80,14 +104,7 @@ int run(int argc, char** argv) {
     CLI::App* functions = app.add_subcommand(
         "functions", "List every function definition with its cyclomatic complexity.");
     add_project_options(*functions, functions_options.project);
-    functions
-        ->add_option("--flag-over", functions_options.thresholds.flagged_over,
-                     "Complexity above this is flagged")
-        ->capture_default_str();
-    functions
-        ->add_option("--high-over", functions_options.thresholds.high_over,
-                     "Complexity above this is high")
-        ->capture_default_str();
+    add_threshold_options(*functions, functions_options.thresholds);
     functions->add_flag("--summary", functions_options.summary,
                         "One row per module (count, mean, median, p90, max, over thresholds)");
 
@@ -110,8 +127,7 @@ int run(int argc, char** argv) {
         ->add_option("--modules", coverage_options.module_map,
                      "Module map file, one 'MODULE = GLOB' rule per line (globs relative to root)")
         ->check(CLI::ExistingFile);
-    coverage->add_option("--path-map", path_map_texts,
-                         "FROM=TO: source paths recorded under FROM are found under TO");
+    add_path_map_option(*coverage, path_map_texts);
     coverage->add_flag("--summary", coverage_options.summary,
                        "One row per module, with line, branch and function percentages");
 
@@ -138,6 +154,28 @@ int run(int argc, char** argv) {
         ->transform(CLI::CheckedTransformer(outputs, CLI::ignore_case))
         ->default_str("edges");
 
+    tezcatl::cli::ReportOptions report_options{.project = default_project_options(),
+                                               .thresholds = {},
+                                               .coverage_inputs = {},
+                                               .path_maps = {},
+                                               .output_directory = {}};
+    CLI::App* report = app.add_subcommand(
+        "report", "Measure everything and write the baseline report (Markdown, JSON, CSV, DOT).");
+    add_project_options(*report, report_options.project);
+    add_threshold_options(*report, report_options.thresholds);
+    report
+        ->add_option("--test-files", report_options.project.test_globs,
+                     "Glob (relative to root) of test code, repeatable; replaces the defaults "
+                     "**/test/**, **/tests/**, **/*_test.*, **/test_*.*")
+        ->take_all();
+    report
+        ->add_option("--coverage", report_options.coverage_inputs,
+                     "Coverage files (lcov, gcov JSON, llvm-cov JSON) to import")
+        ->check(CLI::ExistingFile);
+    add_path_map_option(*report, path_map_texts);
+    report->add_option("-o,--out", report_options.output_directory, "Directory to write into")
+        ->required();
+
     CLI11_PARSE(app, argc, argv);
 
     if (loc->parsed()) {
@@ -151,9 +189,7 @@ int run(int argc, char** argv) {
         return tezcatl::cli::run_functions(functions_options, {.out = std::cout, .err = std::cerr});
     }
     if (coverage->parsed()) {
-        for (const std::string& text : path_map_texts) {
-            coverage_options.path_maps.push_back(tezcatl::coverage::parse_path_mapping(text));
-        }
+        coverage_options.path_maps = parse_path_maps(path_map_texts);
         return tezcatl::cli::run_coverage(coverage_options, {.out = std::cout, .err = std::cerr});
     }
     if (docs->parsed()) {
@@ -161,6 +197,10 @@ int run(int argc, char** argv) {
     }
     if (includes->parsed()) {
         return tezcatl::cli::run_includes(includes_options, {.out = std::cout, .err = std::cerr});
+    }
+    if (report->parsed()) {
+        report_options.path_maps = parse_path_maps(path_map_texts);
+        return tezcatl::cli::run_report(report_options, std::cerr);
     }
     return EXIT_SUCCESS;
 }

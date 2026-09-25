@@ -9,6 +9,7 @@ add_library(
     cli/includes_command.cpp
     cli/loc_command.cpp
     cli/project.cpp
+    cli/report_command.cpp
     config/file_roles.cpp
     config/modules.cpp
     coverage/json_readers.cpp

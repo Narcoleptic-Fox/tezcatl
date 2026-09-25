@@ -328,6 +328,26 @@ add_test(NAME cli.includes.rejects_unknown_output COMMAND tezcatl includes ${INC
                                                         pie)
 set_tests_properties(cli.includes.rejects_unknown_output PROPERTIES WILL_FAIL TRUE)
 
+# Validates a report Tezcatl wrote against docs/report.schema.json.
+add_executable(validate_json tools/validate_json.cpp)
+target_link_libraries(validate_json PRIVATE nlohmann_json_schema_validator::validator)
+target_compile_features(validate_json PRIVATE cxx_std_20)
+tezcatl_apply_warnings(validate_json)
+
+# The report command end to end: its files, its figures, its exit codes.
+add_test(NAME cli.report
+         COMMAND "${CMAKE_COMMAND}" -DTEZCATL=$<TARGET_FILE:tezcatl>
+                 -DVALIDATE=$<TARGET_FILE:validate_json>
+                 -DSCHEMA=${PROJECT_SOURCE_DIR}/docs/report.schema.json
+                 -DFIXTURE=${TEZCATL_FIXTURES_DIR}/coverage
+                 -DDB=${TEZCATL_FIXTURE_DBS}/coverage
+                 -DBROKEN_FIXTURE=${TEZCATL_FIXTURES_DIR}/functions-broken
+                 -DBROKEN_DB=${TEZCATL_FIXTURE_DBS}/functions-broken
+                 -DWORK=${CMAKE_CURRENT_BINARY_DIR}/report-check
+                 -P "${CMAKE_CURRENT_SOURCE_DIR}/cli/report_check.cmake")
+set_tests_properties(cli.report PROPERTIES PASS_REGULAR_EXPRESSION
+                                           "tezcatl report: all checks passed")
+
 # A property value is a list, so a ";" in PASS_REGULAR_EXPRESSION splits it into
 # several regexes, and CTest passes a test when any one of them matches: a
 # fragment such as "ring/b\.h" passes nearly any output. That made two of the
