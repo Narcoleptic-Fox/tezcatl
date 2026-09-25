@@ -1,4 +1,5 @@
 #include "report/module_summary.hpp"
+#include "report_sample.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -10,49 +11,8 @@ namespace fs = std::filesystem;
 using namespace tezcatl;
 
 TEST_CASE("module rows add up every metric, production and test apart", "[report]") {
-    const fs::path root = fs::absolute("/p");
-    const report::FileNaming naming{root, config::ModuleMap::parse("a = a/**", "m.txt"),
-                                    config::FileRoles{}};
-    // Halstead with n1 = n2 = N1 = N2 = 2: V = 4 log2 4 = 8, D = 1, E = 8.
-    const metrics::Halstead eight{
-        .distinct_operators = 2, .distinct_operands = 2, .total_operators = 2, .total_operands = 2};
-    const auto function = [&](const char* file, unsigned complexity, metrics::Halstead h) {
-        return parse::FunctionInfo{.file = root / file,
-                                   .line = 1,
-                                   .column = 1,
-                                   .kind = parse::FunctionKind::function,
-                                   .name = "f()",
-                                   .complexity = complexity,
-                                   .halstead = h};
-    };
-    const auto api = [&](const char* file, unsigned line, parse::DocStyle style) {
-        return parse::ApiEntity{.file = root / file,
-                                .line = line,
-                                .column = 1,
-                                .kind = parse::ApiKind::function,
-                                .name = "f()",
-                                .documentation = style};
-    };
-    report::ReportData data;
-    data.files = {
-        {.file = root / "a/x.c", .counts = {.physical = 10, .blank = 1, .comment = 2, .code = 7}},
-        {.file = root / "a/tests/t.c",
-         .counts = {.physical = 5, .blank = 0, .comment = 1, .code = 4}},
-        {.file = root / "b/y.c", .counts = {.physical = 4, .blank = 0, .comment = 0, .code = 4}}};
-    data.functions = {function("a/x.c", 3, eight), function("a/x.c", 12, eight),
-                      function("a/tests/t.c", 5, eight), function("b/y.c", 1, {})};
-    data.api = {api("a/x.h", 1, parse::DocStyle::doxygen), api("a/x.h", 2, parse::DocStyle::none),
-                api("a/tests/t.h", 1, parse::DocStyle::plain)};
-    data.includes = report::build_include_graph({{.from = root / "b/y.c", .to = root / "a/x.h"}},
-                                                {root / "a/x.c", root / "b/y.c"}, naming);
-    data.coverage = report::AttributedCoverage{
-        .files = {{root / "a/x.c", coverage::Counts{.lines = 10,
-                                                    .lines_covered = 8,
-                                                    .branches = 4,
-                                                    .branches_covered = 2,
-                                                    .functions = 2,
-                                                    .functions_covered = 1}}},
-        .outside = 0};
+    const report::FileNaming naming = test::sample_naming();
+    const report::ReportData data = test::sample_report();
 
     std::ostringstream out;
     report::write_module_table(out, report::summarize_modules(data, naming),
