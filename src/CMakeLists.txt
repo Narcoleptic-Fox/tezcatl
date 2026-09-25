@@ -1,0 +1,14 @@
+configure_file(tezcatl/version.hpp.in "${PROJECT_BINARY_DIR}/generated/tezcatl/version.hpp" @ONLY)
+
+add_library(tezcatl_core STATIC parse/libclang_info.cpp)
+add_library(tezcatl::core ALIAS tezcatl_core)
+target_include_directories(tezcatl_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
+                                               "${PROJECT_BINARY_DIR}/generated")
+target_compile_features(tezcatl_core PUBLIC cxx_std_20)
+target_link_libraries(tezcatl_core PUBLIC Libclang::Libclang)
+tezcatl_apply_warnings(tezcatl_core)
+
+add_executable(tezcatl cli/main.cpp)
+target_link_libraries(tezcatl PRIVATE tezcatl::core CLI11::CLI11)
+tezcatl_apply_warnings(tezcatl)
+tezcatl_copy_runtime_dlls(tezcatl)

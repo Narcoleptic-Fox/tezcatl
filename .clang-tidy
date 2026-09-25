@@ -1,0 +1,26 @@
+---
+# Every disabled check is listed below with the reason. A check is only
+# disabled when it conflicts with a deliberate choice, never to silence code
+# that should be fixed.
+#
+# -modernize-use-trailing-return-type
+#     Style preference only; no safety value, and it makes the code less
+#     familiar to reviewers used to classic C++.
+# -readability-identifier-length
+#     The Halstead and McCabe literature names its quantities n1, n2, N1, N2,
+#     V, D, E. Keeping those names makes the code checkable against the
+#     published definitions.
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*[/\\](src|tests)[/\\].*'
+FormatStyle: file

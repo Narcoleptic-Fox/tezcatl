@@ -1,0 +1,10 @@
+/build/
+/.cache/
+/.vs/
+/.vscode/
+/out/
+CMakeUserPresets.json
+
+# Working notes. Ignored here explicitly rather than trusting a global rule,
+# because the repository will be public.
+/.local/
