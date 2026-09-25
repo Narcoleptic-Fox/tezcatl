@@ -43,6 +43,24 @@ std::vector<fs::path> find_source_files(const std::vector<fs::path>& inputs) {
     return files;
 }
 
+std::vector<fs::path> find_source_files_under(const fs::path& directory,
+                                              const std::function<bool(const fs::path&)>& descend) {
+    std::vector<fs::path> files;
+    for (auto entry = fs::recursive_directory_iterator(directory);
+         entry != fs::recursive_directory_iterator(); ++entry) {
+        const fs::path path = entry->path().lexically_normal();
+        if (entry->is_directory()) {
+            if (!descend(path)) {
+                entry.disable_recursion_pending();
+            }
+        } else if (entry->is_regular_file() && is_source_file(path)) {
+            files.push_back(path);
+        }
+    }
+    std::ranges::sort(files);
+    return files;
+}
+
 std::string read_file(const fs::path& path) {
     std::ifstream stream(path, std::ios::binary);
     if (!stream) {

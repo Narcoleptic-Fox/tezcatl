@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -18,6 +19,14 @@ namespace tezcatl::scan {
 /// an input does not exist.
 [[nodiscard]] std::vector<std::filesystem::path>
 find_source_files(const std::vector<std::filesystem::path>& inputs);
+
+/// The C/C++ source files under `directory`, sorted. A subdirectory for
+/// which `descend` is false is not entered at all: a build tree under the
+/// project root can hold more files than the project, and walking it only
+/// to drop them costs time.
+[[nodiscard]] std::vector<std::filesystem::path>
+find_source_files_under(const std::filesystem::path& directory,
+                        const std::function<bool(const std::filesystem::path&)>& descend);
 
 /// The whole file as bytes. Throws std::runtime_error naming the path if it
 /// cannot be read; a file that cannot be read is never silently skipped.
