@@ -7,8 +7,32 @@ cycles and fan-in/fan-out. It emits machine-readable data alongside a human-read
 
 It is built to produce the baseline a code review of a C or C++ codebase starts from.
 
-> **Status: under construction.** The project skeleton builds and tests on Windows and Linux.
-> No metric is implemented yet.
+> **Status: under construction.** Implemented so far: lines of code, cyclomatic complexity, and
+> the include dependency graph. Every definition is in [docs/metrics.md](docs/metrics.md).
+
+## Usage
+
+```sh
+# Lines of code per file (blank, comment, code), and line by line for auditing
+tezcatl loc src include
+tezcatl loc --lines src/main.cpp
+
+# Every function definition with its cyclomatic complexity, parsed with the
+# project's own flags from compile_commands.json
+tezcatl functions -p build --root . --modules modules.txt
+tezcatl functions -p build --root . --modules modules.txt --summary   # per module
+
+# The #include graph: edges, fan-in/fan-out, cycles, module coupling, Graphviz
+tezcatl includes -p build --root . --modules modules.txt --output cycles
+tezcatl includes -p build --root . --output dot | dot -Tsvg -o includes.svg
+```
+
+A module map assigns files to modules, first matching glob wins:
+
+```text
+core  = src/core/**
+tests = tests/**
+```
 
 ## Building
 

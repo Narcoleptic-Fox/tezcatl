@@ -39,6 +39,15 @@ the project's own compile flags from `compile_commands.json`.
 
 Both GCC-style and MSVC-style (`cl.exe`, clang-cl) compilation databases are supported.
 
+**What "as compiled" means, and its limit.** Every translation unit is parsed by clang with the
+project's own flags, so conditional code is measured as that configuration compiles it: code in
+an `#if` branch the configuration disables is not a function and has no complexity. The parser
+is clang, even for an MSVC database, and clang defines `__clang__`. Code that tests for the
+compiler rather than the platform therefore takes clang's branch: Catch2 enables its Windows
+SEH handlers under `#if defined(_MSC_VER) && !defined(__clang__)`, so a `cl.exe` build compiles
+five functions that Tezcatl never sees. To measure another configuration, generate its
+compilation database and run again.
+
 ## Lines of code
 
 Each physical line of a file is classified as exactly one of:
@@ -150,6 +159,36 @@ lambda):
 rank** (the value at position ⌈0.9 × n⌉ in ascending order, so always a value that occurs),
 the maximum, and how many functions are flagged (including high) and high. A final `TOTAL` row
 covers every module.
+
+### Comparison with lizard
+
+Measured 2026-09-25 with lizard 1.24.0 on the Catch2 v3.16.0 library (`src/`), Tezcatl parsing
+its 108 translation units from an MSVC (`cl.exe`, C++14) compilation database with 0 errors.
+Functions were matched by file and line. lizard counts a lambda's decisions in the enclosing
+function and adds 1 for each `#if`, `#ifdef` and `#elif` line; with those two conventions
+applied to Tezcatl's numbers, the two tools agree on **1,521 of the 1,537 functions both found
+(99.0%)**, and on 1,483 (96.5%) without them.
+
+| The 16 functions that still differ | Count | Which is right |
+|---|---:|---|
+| lizard reads `auto&&` in `for (auto&& e : r)` as a logical `&&` | 6 | Tezcatl |
+| lizard reads the `&&` of a ref-qualifier (`T&& f() &&`) as a logical `&&` | 1 | Tezcatl |
+| a `?:` or a lambda in a constructor's member initializers; lizard does not read initializers | 5 | convention (Tezcatl counts the initializers) |
+| decisions in an `#if` branch this configuration does not compile | 3 | convention (Tezcatl measures what compiles) |
+| lizard runs one function into the next across unbalanced `#if`/`#else` braces | 1 | Tezcatl |
+
+| Found by one tool only | Count | Reason |
+|---|---:|---|
+| lizard only, in 10 headers no library unit includes (header-only templates for users) | 113 | not part of any translation unit, so not compiled in this build |
+| lizard only, in `#if` branches this configuration does not compile | 46 | as compiled. 7 of them `cl.exe` would compile but clang does not, because the test is for the compiler: the 5 SEH handlers behind `!defined(__clang__)` (see *Functions*) and 2 functions behind `#if defined(__GNUC__) \|\| defined(__clang__)` ... `#elif defined(_MSC_VER)` |
+| Tezcatl only, in `catch_tostring.hpp` and `catch_random_integer_helpers.hpp` | 35 | lizard stops recognising functions after a return type such as `enable_if_t<sizeof(A) < sizeof(B), T>`; it finds 1 function in all of `catch_tostring.hpp` |
+| Tezcatl only, functions written by a macro (`CATCH_INTERNAL_DEFINE_EXPRESSION_...`) | 9 | located where the macro is used |
+| Tezcatl only, `main` in `catch_main.cpp` | 1 | lizard takes the `wmain` of the disabled `#if` branch |
+
+The comparison found three defects in Tezcatl, fixed before these numbers were taken, each now
+covered by a fixture: template bodies skipped under clang-cl before C++20 (180 functions
+missing), `= default` functions reported when the compiler defines them (63 extra), and a
+dependent `&&` in a template not counted (2 functions under-counted).
 
 ## Include dependencies
 
