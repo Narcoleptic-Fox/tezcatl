@@ -81,6 +81,31 @@ both the GCC-style and the clang-cl database.
 
 The no-op control stayed green in both runs.
 
+### Documentation coverage, all confirmed 2026-09-25 on MSVC
+
+"The API test" is *the public API of the fixture headers and how each is documented*.
+
+| # | Sabotage | Caught by |
+|---|---|---|
+| 57 | a comment counts across a sibling declaration (src/parse/api.cpp) | the API test (identity, after the macro-made from_macro) |
+| 58 | a comment in another file counts | the API test (defined_elsewhere, documented only at its definition) |
+| 59 | `-fparse-all-comments` not passed (src/parse/translation_unit.cpp) | the API test (every plain comment lost) |
+| 60 | private members counted | the API test |
+| 61 | defaulted and deleted functions counted | the API test |
+| 62 | a struct defined inside a typedef counted as well as the typedef | the API test |
+| 63 | plain comments reported as doxygen | the API test |
+| 64 | functions with internal linkage counted | the API test |
+| 65 | redeclarations counted again | the API test (add is declared twice) |
+| 66 | declarations outside headers counted | the API test (only_in_source) |
+| 67 | the doxygen count includes plain comments (src/cli/docs_command.cpp) | `cli.docs.summary` |
+| 68 | the percentage of undocumented declarations reported | `cli.docs.summary` |
+| 69 | the documented column inverted | `cli.docs.declarations` |
+
+Two of these could not fail until the fixture was extended: 58 (no header declaration had a
+comment only in another file) and 66 (every function in the .cpp and .c files was a
+redeclaration). Row 65 needed the second declaration of `add` for the same reason. The no-op
+control stayed green in both runs.
+
 ### Include graph, all confirmed 2026-09-25 on MSVC
 
 | # | Sabotage | Caught by |
