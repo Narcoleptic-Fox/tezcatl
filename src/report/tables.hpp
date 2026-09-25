@@ -2,6 +2,7 @@
 
 #include "coverage/model.hpp"
 #include "coverage/path_map.hpp"
+#include "metrics/loc.hpp"
 #include "metrics/summary.hpp"
 #include "parse/api.hpp"
 #include "parse/functions.hpp"
@@ -17,6 +18,17 @@ namespace tezcatl::report {
 // The CSV tables Tezcatl writes, one writer each, shared by the commands
 // that print one table and the report that writes them all. Every table
 // starts with a header row; files are named relative to the root.
+
+/// The lines of one source file.
+struct FileLines {
+    std::filesystem::path file;
+    metrics::LocCounts counts;
+};
+
+/// One row per source file: file,module,role (production or test),physical,
+/// blank,comment,code.
+void write_file_table(std::ostream& out, const std::vector<FileLines>& files,
+                      const FileNaming& naming);
 
 /// One row per function: file,line,column,kind,name,module,complexity,
 /// rating, then Halstead's distinct_operators,distinct_operands,

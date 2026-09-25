@@ -50,7 +50,8 @@ add_executable(
     unit/path_map_test.cpp
     unit/paths_test.cpp
     unit/source_files_test.cpp
-    unit/summary_test.cpp)
+    unit/summary_test.cpp
+    unit/tables_test.cpp)
 target_link_libraries(tezcatl_tests PRIVATE tezcatl::core Catch2::Catch2WithMain
                                             nlohmann_json_schema_validator::validator)
 target_compile_definitions(

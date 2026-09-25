@@ -5,6 +5,7 @@
 
 #include <filesystem>
 #include <string>
+#include <string_view>
 
 namespace tezcatl::report {
 
@@ -20,6 +21,8 @@ public:
     [[nodiscard]] std::string relative(const std::filesystem::path& file) const;
     [[nodiscard]] std::string module_of(const std::filesystem::path& file) const;
     [[nodiscard]] bool is_test(const std::filesystem::path& file) const;
+    /// "test" or "production": the role as every table and the JSON name it.
+    [[nodiscard]] std::string_view role_of(const std::filesystem::path& file) const;
     [[nodiscard]] const config::ModuleMap& modules() const noexcept { return modules_; }
     [[nodiscard]] const config::FileRoles& roles() const noexcept { return roles_; }
 

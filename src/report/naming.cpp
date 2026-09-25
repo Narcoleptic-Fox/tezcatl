@@ -22,4 +22,8 @@ bool FileNaming::is_test(const fs::path& file) const {
     return roles_.is_test(relative(file));
 }
 
+std::string_view FileNaming::role_of(const fs::path& file) const {
+    return is_test(file) ? "test" : "production";
+}
+
 } // namespace tezcatl::report

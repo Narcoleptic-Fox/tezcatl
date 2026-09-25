@@ -15,12 +15,6 @@
 
 namespace tezcatl::report {
 
-/// The lines of one source file.
-struct FileLines {
-    std::filesystem::path file;
-    metrics::LocCounts counts;
-};
-
 /// What was run to produce a report, recorded in it so the numbers can be
 /// reproduced.
 struct Provenance {

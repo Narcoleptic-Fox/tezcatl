@@ -13,10 +13,6 @@ using nlohmann::json;
 
 namespace {
 
-std::string role(const FileNaming& naming, const fs::path& file) {
-    return naming.is_test(file) ? "test" : "production";
-}
-
 json lines(const metrics::LocCounts& counts) {
     return {{"physical", counts.physical},
             {"blank", counts.blank},
@@ -102,7 +98,7 @@ json files(const ReportData& data, const FileNaming& naming) {
     for (const FileLines& file : data.files) {
         result.push_back({{"path", naming.relative(file.file)},
                           {"module", naming.module_of(file.file)},
-                          {"role", role(naming, file.file)},
+                          {"role", naming.role_of(file.file)},
                           {"lines", lines(file.counts)}});
     }
     return result;
@@ -119,7 +115,7 @@ json functions(const ReportData& data, const FileNaming& naming) {
              {"kind", parse::to_string(f.kind)},
              {"name", f.name},
              {"module", naming.module_of(f.file)},
-             {"role", role(naming, f.file)},
+             {"role", naming.role_of(f.file)},
              {"complexity", f.complexity},
              {"rating", metrics::to_string(metrics::rate(f.complexity, data.thresholds))},
              {"halstead",
@@ -143,7 +139,7 @@ json api(const ReportData& data, const FileNaming& naming) {
                           {"kind", parse::to_string(e.kind)},
                           {"name", e.name},
                           {"module", naming.module_of(e.file)},
-                          {"role", role(naming, e.file)},
+                          {"role", naming.role_of(e.file)},
                           {"documentation", parse::to_string(e.documentation)}});
     }
     return result;
