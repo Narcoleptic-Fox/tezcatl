@@ -18,7 +18,9 @@ the project's own compile flags from `compile_commands.json`.
 | `function_template` | a function or member function template (reported once, as written, not per instantiation) |
 | `lambda` | each lambda expression is a function of its own, named after the function containing it: `use_lambda()::(lambda)` |
 
-- Declarations, `= default` and `= delete` have no body and are not functions for this purpose.
+- Declarations, `= default` and `= delete` have no body and are not functions for this purpose,
+  including a defaulted function that the compiler defines itself (out of line, or because it is
+  used): that body is not written in the project.
 - Names are qualified with their namespaces and classes and carry their parameter types
   (`geo::area(size_t, size_t)`), which keeps overloads apart. Template parameters are not
   spelled: a function template reads `scaled(T)`.

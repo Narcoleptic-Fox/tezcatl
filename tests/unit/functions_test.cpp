@@ -91,6 +91,9 @@ TEST_CASE("every function definition in the fixture project is found", "[parse]"
         "a.cpp:26:18 lambda use_lambda()::(lambda)",
         // Produced by a macro: located where the macro is used.
         "a.cpp:31:1 function forty_two()",
+        // Counted's three "= default" members are absent, although clang
+        // synthesizes bodies for them (out of line, or used by copy_of).
+        "a.cpp:42:9 function copy_of(const Counted &)",
         "b.cpp:3:5 function from_b()",
         "include/util/detail.hpp:4:12 function util::one()",
         "shared.hpp:9:9 method geo::Point::sum()",

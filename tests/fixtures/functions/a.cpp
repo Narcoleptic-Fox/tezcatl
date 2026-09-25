@@ -29,3 +29,14 @@ int use_lambda() {
 
 #define DEFINE_GETTER(name, value) int name() { return value; }
 DEFINE_GETTER(forty_two, 42)
+
+// "= default" is not a body written in the project, even where the compiler
+// writes one: out of line, or when the function is used (copy_of copies).
+struct Counted {
+    Counted();
+    ~Counted();
+    Counted(const Counted&) = default;
+};
+Counted::Counted() = default;
+Counted::~Counted() = default;
+Counted copy_of(const Counted& original) { return original; }
