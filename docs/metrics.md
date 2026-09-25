@@ -116,6 +116,19 @@ characters including `/` (`src/**/x.c` also matches `src/x.c`). **The first matc
 wins**, so specific rules go first. A file no rule matches belongs to `(unassigned)`: it is
 reported under that name, never dropped.
 
+### Test and production code
+
+Independently of its module, every file is **test** or **production** code. A file is test code
+if its root-relative path matches any test glob (same syntax as module rules). The defaults are
+`**/test/**`, `**/tests/**`, `**/*_test.*` and `**/test_*.*`; `--test-files GLOB` (repeatable)
+replaces them all. A directory named `testing` matches none of the defaults.
+
+In the report, test code counts toward a module's *test* lines only. Complexity, Halstead
+figures and documentation coverage describe production code: a test's complexity is not the
+product's, and a test header is not public API. Test functions and declarations are still
+listed in `functions.csv` and `api.csv`, and `files.csv` and every file, function and
+declaration in `report.json` carry the role, so nothing is hidden, only kept out of the totals.
+
 ## Cyclomatic complexity
 
 McCabe's cyclomatic complexity, per function (every entry in *Functions*, including each

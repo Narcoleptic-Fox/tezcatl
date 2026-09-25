@@ -148,6 +148,41 @@ The no-op control stayed green in all three runs.
 | 47 | cycle edges not drawn red in DOT | `cli.includes.dot` |
 | 48 | source files with no includes are not nodes | `cli.includes.cycles`, `.files`, `.modules` |
 
+### The report, all confirmed 2026-09-25 on MSVC
+
+| # | Sabotage | Caught by |
+|---|---|---|
+| 91 | Markdown: a pipe in a name left unescaped (src/report/markdown_report.cpp) | *a pipe in a name stays inside its table cell* |
+| 92 | Markdown: test functions listed among the most complex | *the Markdown lists leave test code out*, *a long list is cut…* |
+| 93 | Markdown: test declarations listed as undocumented | *an undocumented test declaration is not listed* |
+| 94 | Markdown: least complex listed first | *the Markdown lists leave test code out* |
+| 95 | Markdown: the complexity list not cut at 20 | *a long list is cut and names the CSV with all of it* |
+| 96 | Markdown: a percentage over nothing written 0.0% | *the Markdown summary has one row per module and a total* |
+| 97 | Markdown: a coverage column without coverage data | *without coverage data the report says so rather than 0%* |
+| 98 | Markdown: coupling matrix transposed | *the Markdown include section shows the coupling matrix* |
+| 99 | Markdown: one unit with errors not stated | *parse errors are stated at the top* |
+| 100 | main files of units not collected as graph nodes (src/cli/collect.cpp) | `cli.includes.cycles`, `.files`, `.modules` |
+| 101 | functions seen by several units not merged | `cli.functions.header_counted_once` |
+| 102 | declarations seen by several units not merged | `cli.docs.header_counted_once` |
+| 103 | the source walk filters a rejected directory instead of not entering it (src/scan/source_files.cpp) | *a directory the walk may not descend into is never entered* |
+| 104 | report: a stale coverage.csv kept (src/cli/report_command.cpp) | `cli.report` |
+| 105 | report: test files' lines not counted | `cli.report` |
+| 106 | report: parse errors not passed to the report | `cli.report` |
+| 107 | report: coverage table written under another name | `cli.report` |
+| 108 | report.json no longer valid (src/report/json_report.cpp) | `cli.report` (the real output), and the sample's schema test |
+| 109 | `--path-map` not passed to the report (src/cli/main.cpp) | `cli.report` |
+| 110 | `--test-files` bound to another command's options | `cli.report` |
+| 111 | the default glob `**/test_*.*` dropped (src/config/file_roles.cpp) | *the default test globs…* |
+| 112 | a file is test code only if every glob matches, not any | nine unit tests and `cli.report` |
+| 113 | test code counted as production lines (src/report/module_summary.cpp) | *module rows add up every metric…*, the JSON and Markdown sample tests, `cli.report` |
+| 114 | test functions in the complexity figures | the same |
+| 115 | test headers in documentation coverage | *module rows…* and two Markdown tests |
+| 116 | a module without coverage records given no coverage rather than zeros | *module rows…*, `cli.report` |
+| 117 | module fan-in and fan-out swapped | *module rows…*, *the JSON report carries the sample's figures*, `cli.report` |
+| 118 | a JSON field renamed (src/report/json_report.cpp) | both schema tests, `cli.report` |
+| 119 | the schema accepts unknown fields (docs/report.schema.json) | *the schema rejects what the report must not contain* |
+| 120 | the JSON totals carry include figures | *the JSON report carries the sample's figures* |
+
 **Control:** a sabotage that only adds a comment must leave every test green, and does. The
 harness deletes the sabotaged file's object before building and refuses a result if it was not
 rebuilt: one run reported a green that turned out to be a stale binary.
@@ -159,6 +194,8 @@ rebuilt: one run reported a green that turned out to be a stale binary.
 | 33 | every count tested (1, 10, 11, 12, 21) has ⌈0.9n⌉ equal to round(0.9n) | a 6-value case (0.9 × 6 = 5.4) |
 | 47, and 44 against `cli.includes.cycles` | a `;` in `PASS_REGULAR_EXPRESSION` splits it into a list, and CTest passes if any part matches; the cycles regex contained the bare fragment `ring/b\.h` | `;` written as `[;]`, and tests/CMakeLists.txt refuses any pass regex that splits (sabotaged: a bare `;` stops the configure) |
 | 48 | every source file in the fixture also had an include edge | `lone.cpp`, which includes nothing |
+| 93 | the sample's one test-code declaration is documented, so it could never reach the undocumented list | a test that makes it undocumented |
+| 101, 102 | no CLI fixture had a header parsed by two units; this was as true of the per-command code before collect() | the coverage fixture's compile database, where calc.hpp is parsed by three units |
 | 41 | the project filter already excluded system headers | a test whose filter accepts everything |
 | a guard against `operator&&` as a name counting | libclang annotates that `&&` as a `DeclRefExpr`, never `OverloadedDeclRef`, so the guard never ran | guard removed; *call_by_name* in the fixture pins the behaviour |
 

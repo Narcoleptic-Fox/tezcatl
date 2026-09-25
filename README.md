@@ -7,11 +7,37 @@ cycles and fan-in/fan-out. It emits machine-readable data alongside a human-read
 
 It is built to produce the baseline a code review of a C or C++ codebase starts from.
 
-> **Status: under construction.** Implemented so far: lines of code, cyclomatic complexity,
-> Halstead measures, documentation coverage, imported test coverage, and the include dependency
-> graph. Every definition is in [docs/metrics.md](docs/metrics.md).
+> **Status: under construction.** Every metric is implemented, and `tezcatl report` writes them
+> all as one baseline. Every definition is in [docs/metrics.md](docs/metrics.md); the JSON
+> report's shape is [docs/report.schema.json](docs/report.schema.json).
 
 ## Usage
+
+```sh
+# The whole baseline in one pass: report.md for people, report.json for programs,
+# and every table as CSV, plus the include graph for Graphviz
+tezcatl report -p build --root . --modules modules.txt --out metrics
+tezcatl report -p build --root . --modules modules.txt --out metrics \
+    --coverage build/coverage.info --test-files "tests/**" --flag-over 15
+```
+
+`report` writes:
+
+| File | Contents |
+|---|---|
+| `report.md` | summary per module, then each metric with the functions, declarations and files to look at first |
+| `report.json` | everything, validating against `docs/report.schema.json` |
+| `modules.csv` | one row per module across every metric, and a TOTAL row |
+| `files.csv`, `functions.csv`, `api.csv` | one row per source file, function, public declaration |
+| `coverage.csv` | imported coverage per file (only with `--coverage`) |
+| `include-*.csv`, `includes.dot` | include edges, fan-in/fan-out per file and module, cycles, coupling |
+
+Test code (by default `**/test/**`, `**/tests/**`, `**/*_test.*`, `**/test_*.*`) counts toward
+test lines only; complexity, Halstead and documentation figures are the product's. A unit that
+fails to parse still produces a report, marked incomplete, and exit code 1 unless
+`--allow-parse-errors`.
+
+Each measure also has its own command, which writes one table to stdout:
 
 ```sh
 # Lines of code per file (blank, comment, code), and line by line for auditing
