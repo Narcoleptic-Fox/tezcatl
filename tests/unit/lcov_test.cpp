@@ -16,7 +16,7 @@ namespace {
 CoverageData read(const std::string& text) {
     std::istringstream in{text};
     CoverageData data;
-    read_lcov(in, fs::path{"/base"}, "test.info", data);
+    read_lcov(in, fs::path{"/base"}, fs::path{"test.info"}, data);
     return data;
 }
 

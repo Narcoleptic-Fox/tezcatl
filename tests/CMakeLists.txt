@@ -31,6 +31,7 @@ add_executable(
     unit/api_test.cpp
     unit/command_line_test.cpp
     unit/complexity_test.cpp
+    unit/coverage_test.cpp
     unit/csv_test.cpp
     unit/function_halstead_test.cpp
     unit/functions_test.cpp

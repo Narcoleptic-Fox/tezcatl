@@ -18,8 +18,8 @@ namespace {
 
 class LcovReader {
 public:
-    LcovReader(fs::path base, std::string_view source, CoverageData& data)
-        : base_(std::move(base)), source_(source), data_(&data) {}
+    LcovReader(fs::path base, fs::path source, CoverageData& data)
+        : base_(std::move(base)), source_(std::move(source)), data_(&data) {}
 
     void read_line(std::string_view line) {
         ++line_number_;
@@ -31,8 +31,12 @@ public:
         const std::string_view value =
             colon == std::string_view::npos ? std::string_view{} : line.substr(colon + 1);
         if (tag == "SF") {
-            fs::path file{value};
-            current_ = &(*data_)[(file.is_relative() ? base_ / file : file).lexically_normal()];
+            const fs::path file{value};
+            const fs::path path = resolve_recorded_path(file, base_);
+            current_ = &(*data_)[path];
+            if (current_->has_totals()) {
+                fail("line data for " + path.string() + ", which also has llvm-cov totals");
+            }
         } else if (tag == "end_of_record") {
             current_ = nullptr;
         } else if (tag == "DA") {
@@ -53,8 +57,8 @@ public:
 
 private:
     [[noreturn]] void fail(std::string_view problem) const {
-        throw std::runtime_error(std::string{source_} + ':' + std::to_string(line_number_) + ": " +
-                                 std::string{problem});
+        throw std::runtime_error(source_.generic_string() + ':' + std::to_string(line_number_) +
+                                 ": " + std::string{problem});
     }
 
     [[nodiscard]] FileRecord& current() const {
@@ -145,7 +149,7 @@ private:
     }
 
     fs::path base_;
-    std::string_view source_;
+    fs::path source_;
     CoverageData* data_;
     FileRecord* current_ = nullptr;
     std::size_t line_number_ = 0;
@@ -153,8 +157,7 @@ private:
 
 } // namespace
 
-void read_lcov(std::istream& in, const fs::path& base, std::string_view source,
-               CoverageData& data) {
+void read_lcov(std::istream& in, const fs::path& base, const fs::path& source, CoverageData& data) {
     LcovReader reader{base, source, data};
     std::string line;
     while (std::getline(in, line)) {

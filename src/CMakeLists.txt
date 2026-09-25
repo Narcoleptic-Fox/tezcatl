@@ -8,8 +8,10 @@ add_library(
     cli/loc_command.cpp
     cli/project.cpp
     config/modules.cpp
+    coverage/json_readers.cpp
     coverage/lcov.cpp
     coverage/model.cpp
+    coverage/read_file.cpp
     graph/digraph.cpp
     metrics/complexity.cpp
     metrics/halstead.cpp

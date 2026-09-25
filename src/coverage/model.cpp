@@ -14,6 +14,11 @@ Counts& Counts::operator+=(const Counts& other) noexcept {
     return *this;
 }
 
+std::filesystem::path resolve_recorded_path(const std::filesystem::path& recorded,
+                                            const std::filesystem::path& base) {
+    return (recorded.has_root_directory() ? recorded : base / recorded).lexically_normal();
+}
+
 void FileRecord::add_line(unsigned line, std::uint64_t hits) {
     lines_[line] += hits;
 }
