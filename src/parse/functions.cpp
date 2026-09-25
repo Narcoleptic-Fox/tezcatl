@@ -2,6 +2,7 @@
 
 #include "metrics/complexity.hpp"
 #include "parse/clang_string.hpp"
+#include "parse/cursors.hpp"
 #include "parse/function_tokens.hpp"
 
 #include <algorithm>
@@ -80,60 +81,6 @@ bool has_body(CXCursor cursor) {
     return found;
 }
 
-std::string scope_name(CXCursor scope) {
-    const CXCursorKind kind = clang_getCursorKind(scope);
-    if (kind == CXCursor_Namespace && clang_Cursor_isAnonymous(scope) != 0) {
-        return "(anonymous namespace)";
-    }
-    if (clang_isDeclaration(kind) != 0 && function_kind(kind).has_value()) {
-        return std::string{ClangString{clang_getCursorDisplayName(scope)}.view()};
-    }
-    const ClangString spelling{clang_getCursorSpelling(scope)};
-    return spelling.view().empty() ? "(anonymous)" : std::string{spelling.view()};
-}
-
-// Enclosing namespaces and classes outermost first, joined with "::" and
-// ending in "::", or empty at global scope. extern "C" blocks are not scopes.
-std::string qualifier(CXCursor declaration) {
-    std::vector<std::string> scopes;
-    for (CXCursor parent = clang_getCursorSemanticParent(declaration);
-         clang_Cursor_isNull(parent) == 0 && clang_isInvalid(clang_getCursorKind(parent)) == 0 &&
-         clang_getCursorKind(parent) != CXCursor_TranslationUnit;
-         parent = clang_getCursorSemanticParent(parent)) {
-        if (clang_getCursorKind(parent) != CXCursor_LinkageSpec) {
-            scopes.push_back(scope_name(parent));
-        }
-    }
-    std::string result;
-    for (const std::string& scope : std::views::reverse(scopes)) {
-        result += scope;
-        result += "::";
-    }
-    return result;
-}
-
-struct Location {
-    fs::path file;
-    unsigned line = 0;
-    unsigned column = 0;
-    bool in_system_header = false;
-};
-
-// Where the cursor's name is written; for code produced by a macro, where
-// the macro is used.
-Location location_of(CXCursor cursor, const fs::path& directory) {
-    const CXSourceLocation location = clang_getCursorLocation(cursor);
-    CXFile file = nullptr;
-    Location result;
-    clang_getExpansionLocation(location, &file, &result.line, &result.column, nullptr);
-    if (file != nullptr) {
-        result.file =
-            (directory / fs::path{ClangString{clang_getFileName(file)}.view()}).lexically_normal();
-    }
-    result.in_system_header = clang_Location_isInSystemHeader(location) != 0;
-    return result;
-}
-
 struct VisitContext {
     CXTranslationUnit unit = nullptr;
     const fs::path* directory = nullptr; ///< for resolving relative file names
@@ -148,7 +95,7 @@ CXChildVisitResult visit(CXCursor cursor, CXCursor /*parent*/, CXClientData data
     if (!kind.has_value()) {
         return CXChildVisit_Recurse;
     }
-    const Location location = location_of(cursor, *context.directory);
+    const SourcePosition location = position_of(cursor, *context.directory);
     if (location.in_system_header) {
         return CXChildVisit_Continue;
     }
@@ -158,8 +105,8 @@ CXChildVisitResult visit(CXCursor cursor, CXCursor /*parent*/, CXClientData data
         name = context.enclosing_function.empty() ? "(lambda)"
                                                   : context.enclosing_function + "::(lambda)";
     } else {
-        name =
-            qualifier(cursor) + std::string{ClangString{clang_getCursorDisplayName(cursor)}.view()};
+        name = scope_qualifier(cursor) +
+               std::string{ClangString{clang_getCursorDisplayName(cursor)}.view()};
     }
 
     if (has_body(cursor) && !location.file.empty() && (*context.include_file)(location.file)) {

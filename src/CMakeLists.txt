@@ -14,6 +14,7 @@ add_library(
     metrics/summary.cpp
     parse/command_line.cpp
     parse/compilation_database.cpp
+    parse/cursors.cpp
     parse/function_tokens.cpp
     parse/functions.cpp
     parse/includes.cpp
