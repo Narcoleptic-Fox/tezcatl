@@ -6,7 +6,7 @@ set(TEZCATL_FIXTURES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
 # generated into the build tree. The build tree is also where a real project's
 # database lives, outside the sources it describes.
 set(TEZCATL_FIXTURE_DBS "${CMAKE_CURRENT_BINARY_DIR}/fixture-dbs")
-foreach(fixture complexity docs functions functions-broken functions-werror halstead includes)
+foreach(fixture complexity coverage docs functions functions-broken functions-werror halstead includes)
     set(FIXTURE_DIR "${TEZCATL_FIXTURES_DIR}/${fixture}")
     configure_file("${FIXTURE_DIR}/compile_commands.json.in"
                    "${TEZCATL_FIXTURE_DBS}/${fixture}/compile_commands.json" @ONLY)
@@ -200,6 +200,19 @@ set_tests_properties(
         PASS_REGULAR_EXPRESSION
         "\ninclude/api\\.hpp,13,5,function,\"subtract\\(int, int\\)\",cpp,yes,plain\n.*\ninclude/api\\.hpp,61,25,function,identity\\(T\\),cpp,no,none\n"
 )
+
+# tests/fixtures/coverage/src/calc.hpp is parsed by all three units of its
+# database; its template clamp and its three declarations count once. By
+# hand: calc is classify 3 (two ifs), never_called 1, clamp 3 (if and ?:).
+set(CALC_ARGS -p "${TEZCATL_FIXTURE_DBS}/coverage" --root "${TEZCATL_FIXTURES_DIR}/coverage"
+              --modules "${TEZCATL_FIXTURES_DIR}/coverage/modules.txt")
+add_test(NAME cli.functions.header_counted_once COMMAND tezcatl functions ${CALC_ARGS} --summary)
+set_tests_properties(
+    cli.functions.header_counted_once
+    PROPERTIES PASS_REGULAR_EXPRESSION "\ncalc,3,2\\.33,3\\.0,3,3,0,0,[^\n]*\nmain,1,2\\.00,")
+add_test(NAME cli.docs.header_counted_once COMMAND tezcatl docs ${CALC_ARGS} --summary)
+set_tests_properties(cli.docs.header_counted_once
+                     PROPERTIES PASS_REGULAR_EXPRESSION "\ncalc,3,0,0\\.0,0\nTOTAL,3,0,0\\.0,0\n")
 
 # Coverage import from tests/fixtures/coverage/data, recorded under
 # /coverage-fixture. Expected values are the tools' own, not Tezcatl's (see the

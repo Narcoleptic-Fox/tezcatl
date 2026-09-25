@@ -14,6 +14,11 @@ The directory the data was generated in has been replaced by `/coverage-fixture`
 `/coverage-fixture/src/calc.cpp` (the gcov JSON keeps its paths relative to
 `/coverage-fixture/gcc`, as gcov wrote them). Nothing else was edited.
 
+`tests/calc_test.cpp` and `compile_commands.json.in` were added afterwards so the same project can
+be parsed as well as imported: `calc.hpp` is then seen by three units, and the test file is test
+code by the default globs. The test file was never part of the measured program, so the coverage
+data has no record of it.
+
 The expected totals come from the tools, not from Tezcatl:
 
 | Data | Lines (covered) | Branches (covered) | Functions (covered) | Oracle |
