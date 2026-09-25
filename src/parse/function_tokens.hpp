@@ -11,9 +11,10 @@ namespace tezcatl::parse {
 
 /// The tokens a function definition is written with, and which of them are
 /// its own: not those of the functions nested in it (lambdas, member
-/// functions of local classes), which are measured separately. Every
-/// per-function metric reads the same own tokens, so they agree on what
-/// belongs to a function.
+/// functions of local classes), which are measured separately, and not those
+/// the preprocessor consumed (directive lines, and code an #if removed), which
+/// the compiler never sees. Every per-function metric reads the same own
+/// tokens, so they agree on what belongs to a function.
 class FunctionTokens {
 public:
     FunctionTokens(CXTranslationUnit unit, CXCursor function);

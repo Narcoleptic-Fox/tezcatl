@@ -1,8 +1,10 @@
 #include "parse/function_tokens.hpp"
 
+#include "parse/clang_handles.hpp"
 #include "parse/functions.hpp"
 
 #include <algorithm>
+#include <span>
 
 namespace tezcatl::parse {
 
@@ -38,16 +40,53 @@ std::vector<OffsetRange> nested_functions(CXCursor function) {
     return nested;
 }
 
+// The regions of the function's file that the preprocessor skipped because
+// an #if, #ifdef or #elif condition was false.
+std::vector<OffsetRange> skipped_regions(CXTranslationUnit unit, CXCursor function) {
+    CXFile file = nullptr;
+    clang_getFileLocation(clang_getRangeStart(clang_getCursorExtent(function)), &file, nullptr,
+                          nullptr, nullptr);
+    if (file == nullptr) {
+        return {};
+    }
+    const SourceRangeListHandle list{clang_getSkippedRanges(unit, file)};
+    if (!list) {
+        return {};
+    }
+    std::vector<OffsetRange> skipped;
+    for (const CXSourceRange& range : std::span{list->ranges, list->count}) {
+        skipped.push_back({.begin = file_offset(clang_getRangeStart(range)),
+                           .end = file_offset(clang_getRangeEnd(range))});
+    }
+    return skipped;
+}
+
+bool is_directive(CXCursor cursor) {
+    switch (clang_getCursorKind(cursor)) {
+    case CXCursor_PreprocessingDirective:
+    case CXCursor_MacroDefinition:
+    case CXCursor_InclusionDirective:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool inside_any(const std::vector<OffsetRange>& ranges, unsigned offset) {
+    return std::ranges::any_of(
+        ranges, [offset](const OffsetRange& range) { return range.contains(offset); });
+}
+
 } // namespace
 
 FunctionTokens::FunctionTokens(CXTranslationUnit unit, CXCursor function)
     : tokens_(unit, clang_getCursorExtent(function)) {
     const std::vector<OffsetRange> nested = nested_functions(function);
+    const std::vector<OffsetRange> skipped = skipped_regions(unit, function);
     for (std::size_t index = 0; index < tokens_.size(); ++index) {
         const unsigned offset = tokens_.offset(index);
-        const bool in_nested_function = std::ranges::any_of(
-            nested, [offset](const OffsetRange& range) { return range.contains(offset); });
-        if (!in_nested_function) {
+        if (!inside_any(nested, offset) && !inside_any(skipped, offset) &&
+            !is_directive(tokens_.cursor(index))) {
             own_.push_back(index);
         }
     }

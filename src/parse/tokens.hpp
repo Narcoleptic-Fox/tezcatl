@@ -28,6 +28,10 @@ public:
 
     [[nodiscard]] std::size_t size() const noexcept { return tokens_.size(); }
     [[nodiscard]] std::string spelling(std::size_t index) const;
+    /// Punctuation, keyword, identifier, literal or comment.
+    [[nodiscard]] CXTokenKind kind(std::size_t index) const {
+        return clang_getTokenKind(tokens_.at(index));
+    }
     /// The most specific cursor covering the token.
     [[nodiscard]] CXCursor cursor(std::size_t index) const { return cursors_.at(index); }
     /// Byte offset of the token's start in the file it is written in.

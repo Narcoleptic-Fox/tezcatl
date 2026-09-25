@@ -1,5 +1,6 @@
 #pragma once
 
+#include "metrics/halstead.hpp"
 #include "parse/translation_unit.hpp"
 
 #include <compare>
@@ -42,6 +43,8 @@ struct FunctionInfo {
     std::string name;
     /// McCabe cyclomatic complexity, as defined in docs/metrics.md.
     unsigned complexity = 1;
+    /// Halstead's counts and measures, as defined in docs/metrics.md.
+    metrics::Halstead halstead;
 
     /// Ordered by location, so a sorted list reads top to bottom per file.
     friend std::strong_ordering operator<=>(const FunctionInfo& a, const FunctionInfo& b) {

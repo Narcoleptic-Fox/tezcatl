@@ -17,6 +17,22 @@ bool is_value_keyword(std::string_view spelling) noexcept {
     return std::ranges::find(values, spelling) != values.end();
 }
 
+TokenCategory category(CXTokenKind kind) noexcept {
+    switch (kind) {
+    case CXToken_Punctuation:
+        return TokenCategory::punctuation;
+    case CXToken_Keyword:
+        return TokenCategory::keyword;
+    case CXToken_Identifier:
+        return TokenCategory::identifier;
+    case CXToken_Literal:
+        return TokenCategory::literal;
+    case CXToken_Comment:
+        return TokenCategory::comment;
+    }
+    return TokenCategory::comment;
+}
+
 } // namespace
 
 HalsteadRole halstead_role(TokenCategory category, std::string_view spelling) noexcept {
@@ -70,6 +86,14 @@ void HalsteadCounter::add(TokenCategory category, std::string_view spelling) {
     case HalsteadRole::not_counted:
         break;
     }
+}
+
+Halstead measure_halstead(const parse::FunctionTokens& function) {
+    HalsteadCounter counter;
+    for (const std::size_t index : function.own()) {
+        counter.add(category(function.all().kind(index)), function.all().spelling(index));
+    }
+    return counter.result();
 }
 
 Halstead HalsteadCounter::result() const {

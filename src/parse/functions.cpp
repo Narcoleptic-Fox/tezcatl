@@ -163,13 +163,14 @@ CXChildVisitResult visit(CXCursor cursor, CXCursor /*parent*/, CXClientData data
     }
 
     if (has_body(cursor) && !location.file.empty() && (*context.include_file)(location.file)) {
-        context.found->push_back(
-            {.file = location.file,
-             .line = location.line,
-             .column = location.column,
-             .kind = *kind,
-             .name = name,
-             .complexity = metrics::cyclomatic_complexity(FunctionTokens{context.unit, cursor})});
+        const FunctionTokens tokens{context.unit, cursor};
+        context.found->push_back({.file = location.file,
+                                  .line = location.line,
+                                  .column = location.column,
+                                  .kind = *kind,
+                                  .name = name,
+                                  .complexity = metrics::cyclomatic_complexity(tokens),
+                                  .halstead = metrics::measure_halstead(tokens)});
     }
 
     // Visit the body with this function as the enclosing one, so lambdas

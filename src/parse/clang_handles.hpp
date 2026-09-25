@@ -38,6 +38,11 @@ struct CompileCommandsDeleter {
 using CompileCommandsHandle =
     std::unique_ptr<std::remove_pointer_t<CXCompileCommands>, CompileCommandsDeleter>;
 
+struct SourceRangeListDeleter {
+    void operator()(CXSourceRangeList* list) const noexcept { clang_disposeSourceRangeList(list); }
+};
+using SourceRangeListHandle = std::unique_ptr<CXSourceRangeList, SourceRangeListDeleter>;
+
 struct DiagnosticDeleter {
     void operator()(CXDiagnostic diagnostic) const noexcept { clang_disposeDiagnostic(diagnostic); }
 };

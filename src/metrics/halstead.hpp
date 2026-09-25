@@ -1,5 +1,7 @@
 #pragma once
 
+#include "parse/function_tokens.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -52,5 +54,8 @@ private:
     std::size_t total_operators_ = 0;
     std::size_t total_operands_ = 0;
 };
+
+/// Halstead's measures of a function definition's own tokens, as written.
+[[nodiscard]] Halstead measure_halstead(const parse::FunctionTokens& function);
 
 } // namespace tezcatl::metrics
