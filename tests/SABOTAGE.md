@@ -7,7 +7,7 @@ the check.
 
 | # | Sabotage | Caught by | Last confirmed |
 |---|---|---|---|
-| 1 | `libclang_version()` returns `""` (src/parse/libclang_info.cpp) | unit test *libclang reports its release version at run time*, and `cli.version` | 2026-09-24, MSVC |
+| 1 | `libclang_version()` returns `""` (src/parse/libclang_info.cpp) | unit test *libclang reports its release version at run time*, and `cli.version` | 2026-09-24, MSVC; and in CI on all four test jobs (PR #1, run 36085525279) |
 | 2 | `main` swallows a CLI parse error and exits 0 (src/cli/main.cpp) | `cli.rejects_unknown_flag` | 2026-09-24, MSVC |
 | 3 | Null pointer dereference added to src/parse/libclang_info.cpp | cppcheck `nullPointer` via `scripts/lint.sh` | 2026-09-24, cppcheck 2.22 |
 
