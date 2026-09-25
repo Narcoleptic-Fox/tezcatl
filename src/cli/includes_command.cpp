@@ -49,17 +49,19 @@ IncludeGraph build_graph(const Project& project, const std::vector<parse::Includ
                          const std::vector<std::filesystem::path>& sources) {
     std::vector<Digraph::Edge> file_edges(edges.size());
     std::ranges::transform(edges, file_edges.begin(), [&project](const parse::IncludeEdge& edge) {
-        return Digraph::Edge{project.relative(edge.from), project.relative(edge.to)};
+        return Digraph::Edge{project.naming().relative(edge.from),
+                             project.naming().relative(edge.to)};
     });
     std::vector<std::string> source_names(sources.size());
-    std::ranges::transform(
-        sources, source_names.begin(),
-        [&project](const std::filesystem::path& source) { return project.relative(source); });
+    std::ranges::transform(sources, source_names.begin(),
+                           [&project](const std::filesystem::path& source) {
+                               return project.naming().relative(source);
+                           });
     Digraph files{file_edges, source_names};
 
     std::vector<std::string> file_module(files.size());
     for (std::size_t node = 0; node < files.size(); ++node) {
-        file_module.at(node) = project.modules().module_of(files.name(node));
+        file_module.at(node) = project.naming().modules().module_of(files.name(node));
     }
     std::map<std::pair<std::string, std::string>, std::size_t> coupling;
     std::vector<Digraph::Edge> module_edges;

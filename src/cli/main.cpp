@@ -34,6 +34,7 @@ tezcatl::cli::ProjectOptions default_project_options() {
             .root = std::filesystem::current_path(),
             .resource_directory = tezcatl::parse::default_resource_directory(),
             .module_map = {},
+            .test_globs = {},
             .allow_parse_errors = false};
 }
 

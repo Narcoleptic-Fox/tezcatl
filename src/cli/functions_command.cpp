@@ -42,7 +42,7 @@ void write_summary(const Project& project, const std::vector<parse::FunctionInfo
     std::map<std::string, ModuleTotals> by_module;
     ModuleTotals all;
     for (const parse::FunctionInfo& function : functions) {
-        by_module[project.module_of(function.file)].add(function);
+        by_module[project.naming().module_of(function.file)].add(function);
         all.add(function);
     }
     out << "module,functions,mean,median,p90,max,flagged,high,volume,effort\n";
@@ -59,11 +59,12 @@ void write_functions(const Project& project, const std::vector<parse::FunctionIn
            "volume,difficulty,effort\n";
     for (const parse::FunctionInfo& function : functions) {
         const metrics::Halstead& h = function.halstead;
-        out << report::csv_field(project.relative(function.file)) << ',' << function.line << ','
-            << function.column << ',' << parse::to_string(function.kind) << ','
+        out << report::csv_field(project.naming().relative(function.file)) << ',' << function.line
+            << ',' << function.column << ',' << parse::to_string(function.kind) << ','
             << report::csv_field(function.name) << ','
-            << report::csv_field(project.module_of(function.file)) << ',' << function.complexity
-            << ',' << metrics::to_string(metrics::rate(function.complexity, thresholds)) << ','
+            << report::csv_field(project.naming().module_of(function.file)) << ','
+            << function.complexity << ','
+            << metrics::to_string(metrics::rate(function.complexity, thresholds)) << ','
             << h.distinct_operators << ',' << h.distinct_operands << ',' << h.total_operators << ','
             << h.total_operands << ','
             << std::format("{:.2f},{:.2f},{:.2f}", h.volume(), h.difficulty(), h.effort()) << '\n';

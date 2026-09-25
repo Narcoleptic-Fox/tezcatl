@@ -3,6 +3,7 @@
 #include "config/modules.hpp"
 #include "parse/functions.hpp"
 #include "parse/translation_unit.hpp"
+#include "report/naming.hpp"
 
 #include <cstddef>
 #include <filesystem>
@@ -10,6 +11,7 @@
 #include <iosfwd>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace tezcatl::cli {
 
@@ -20,6 +22,7 @@ struct ProjectOptions {
     std::filesystem::path root;               ///< only files under here are the project's
     std::filesystem::path resource_directory; ///< clang's built-in headers
     std::filesystem::path module_map;         ///< empty: every file is unassigned
+    std::vector<std::string> test_globs;      ///< empty: the default test globs
     bool allow_parse_errors = false;
 };
 
@@ -54,10 +57,8 @@ public:
     /// True for files under the root and not under the build directory, if
     /// there is one (fetched dependencies, generated code).
     [[nodiscard]] const parse::FileFilter& in_project() const noexcept { return in_project_; }
-    /// `file` relative to the root, with '/' separators.
-    [[nodiscard]] std::string relative(const std::filesystem::path& file) const;
-    [[nodiscard]] std::string module_of(const std::filesystem::path& file) const;
-    [[nodiscard]] const config::ModuleMap& modules() const noexcept { return modules_; }
+    /// How files are named, and assigned to modules and roles.
+    [[nodiscard]] const report::FileNaming& naming() const noexcept { return naming_; }
 
     /// Parses every compilation database entry and hands each unit that
     /// libclang could parse to `visit`. Parse errors are written to `err`.
@@ -76,7 +77,7 @@ private:
     std::filesystem::path root_;
     std::filesystem::path build_;
     parse::FileFilter in_project_;
-    config::ModuleMap modules_;
+    report::FileNaming naming_;
 };
 
 } // namespace tezcatl::cli

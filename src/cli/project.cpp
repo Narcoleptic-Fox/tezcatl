@@ -36,16 +36,11 @@ Project::Project(const ProjectOptions& options)
       in_project_([this](const fs::path& file) {
           return scan::is_within(file, root_) && (build_.empty() || !scan::is_within(file, build_));
       }),
-      modules_(options.module_map.empty() ? config::ModuleMap{}
-                                          : config::ModuleMap::load(options.module_map)) {}
-
-std::string Project::relative(const fs::path& file) const {
-    return file.lexically_relative(root_).generic_string();
-}
-
-std::string Project::module_of(const fs::path& file) const {
-    return modules_.module_of(relative(file));
-}
+      naming_(options.root,
+              options.module_map.empty() ? config::ModuleMap{}
+                                         : config::ModuleMap::load(options.module_map),
+              options.test_globs.empty() ? config::FileRoles{}
+                                         : config::FileRoles{options.test_globs}) {}
 
 ScanTotals Project::scan(const std::function<void(const parse::ParsedUnit&)>& visit,
                          std::ostream& err) const {

@@ -46,7 +46,7 @@ void write_summary(const Project& project, const std::vector<parse::ApiEntity>& 
                    std::ostream& out) {
     std::map<std::string, Coverage> by_module;
     for (const parse::ApiEntity& entity : entities) {
-        by_module[project.module_of(entity.file)].add(entity);
+        by_module[project.naming().module_of(entity.file)].add(entity);
     }
     out << "module,entities,documented,percent,doxygen\n";
     for (const auto& [module, coverage] : by_module) {
@@ -59,10 +59,10 @@ void write_entities(const Project& project, const std::vector<parse::ApiEntity>&
     out << "file,line,column,kind,name,module,documented,style\n";
     for (const parse::ApiEntity& entity : entities) {
         const bool documented = entity.documentation != parse::DocStyle::none;
-        out << report::csv_field(project.relative(entity.file)) << ',' << entity.line << ','
-            << entity.column << ',' << parse::to_string(entity.kind) << ','
+        out << report::csv_field(project.naming().relative(entity.file)) << ',' << entity.line
+            << ',' << entity.column << ',' << parse::to_string(entity.kind) << ','
             << report::csv_field(entity.name) << ','
-            << report::csv_field(project.module_of(entity.file)) << ','
+            << report::csv_field(project.naming().module_of(entity.file)) << ','
             << (documented ? "yes" : "no") << ',' << parse::to_string(entity.documentation) << '\n';
     }
 }

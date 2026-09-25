@@ -58,6 +58,7 @@ int run_coverage(const CoverageOptions& options, const Streams& streams) {
                            .root = options.root,
                            .resource_directory = {},
                            .module_map = options.module_map,
+                           .test_globs = {},
                            .allow_parse_errors = false}};
     // Mapped paths, sorted, so output is in path order whatever the input.
     std::map<fs::path, coverage::Counts> files;
@@ -75,7 +76,7 @@ int run_coverage(const CoverageOptions& options, const Streams& streams) {
         std::map<std::string, ModuleCoverage> modules;
         ModuleCoverage all;
         for (const auto& [file, counts] : files) {
-            ModuleCoverage& module = modules[project.module_of(file)];
+            ModuleCoverage& module = modules[project.naming().module_of(file)];
             ++module.files;
             module.counts += counts;
             ++all.files;
@@ -91,8 +92,8 @@ int run_coverage(const CoverageOptions& options, const Streams& streams) {
         out << "file,module,lines,lines_covered,branches,branches_covered,functions,"
                "functions_covered\n";
         for (const auto& [file, counts] : files) {
-            out << report::csv_field(project.relative(file)) << ','
-                << report::csv_field(project.module_of(file)) << ',';
+            out << report::csv_field(project.naming().relative(file)) << ','
+                << report::csv_field(project.naming().module_of(file)) << ',';
             write_counts(out, counts);
             out << '\n';
         }
