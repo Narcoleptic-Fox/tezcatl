@@ -13,6 +13,7 @@ add_library(
     parse/command_line.cpp
     parse/compilation_database.cpp
     parse/functions.cpp
+    parse/includes.cpp
     parse/libclang_info.cpp
     parse/tokens.cpp
     parse/translation_unit.cpp

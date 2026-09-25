@@ -1,0 +1,17 @@
+[
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["clang++", "-std=c++20", "-Iinclude", "-c", "main.cpp"],
+    "file": "main.cpp"
+  },
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["clang++", "-std=c++20", "-c", "other.cpp"],
+    "file": "other.cpp"
+  },
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["clang++", "-std=c++20", "-c", "lone.cpp"],
+    "file": "lone.cpp"
+  }
+]
