@@ -10,7 +10,10 @@ cd "$root"
 clang_format=${CLANG_FORMAT:-clang-format}
 clang_tidy=${CLANG_TIDY:-clang-tidy}
 
-mapfile -t sources < <(find src tests -type f \( -name '*.cpp' -o -name '*.hpp' \) | sort)
+# tests/fixtures holds inputs for Tezcatl to measure, written to exercise edge
+# cases; it is not Tezcatl's own code and is not in the compilation database.
+mapfile -t sources < <(find src tests -path tests/fixtures -prune -o \
+    -type f \( -name '*.cpp' -o -name '*.hpp' \) -print | sort)
 mapfile -t translation_units < <(printf '%s\n' "${sources[@]}" | grep '\.cpp$')
 
 # A gate over zero files passes by checking nothing.

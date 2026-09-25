@@ -1,0 +1,1 @@
+not source, must be skipped when walking a directory

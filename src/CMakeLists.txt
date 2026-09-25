@@ -1,6 +1,9 @@
 configure_file(tezcatl/version.hpp.in "${PROJECT_BINARY_DIR}/generated/tezcatl/version.hpp" @ONLY)
 
-add_library(tezcatl_core STATIC parse/libclang_info.cpp)
+add_library(
+    tezcatl_core STATIC
+    parse/libclang_info.cpp
+    scan/source_files.cpp)
 add_library(tezcatl::core ALIAS tezcatl_core)
 target_include_directories(tezcatl_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
                                                "${PROJECT_BINARY_DIR}/generated")
