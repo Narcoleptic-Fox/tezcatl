@@ -31,6 +31,7 @@ add_library(
     parse/tokens.cpp
     parse/translation_unit.cpp
     report/csv.cpp
+    report/include_graph.cpp
     report/naming.cpp
     report/tables.cpp
     scan/glob.cpp
