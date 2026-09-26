@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["clang", "-std=c11", "-c", "unit.c"],
+    "file": "unit.c"
+  }
+]

@@ -6,7 +6,7 @@ set(TEZCATL_FIXTURES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
 # generated into the build tree. The build tree is also where a real project's
 # database lives, outside the sources it describes.
 set(TEZCATL_FIXTURE_DBS "${CMAKE_CURRENT_BINARY_DIR}/fixture-dbs")
-foreach(fixture complexity coverage docs functions functions-broken functions-werror halstead includes
+foreach(fixture complexity coverage docs docs-files functions functions-broken functions-werror halstead includes
                 mixed)
     set(FIXTURE_DIR "${TEZCATL_FIXTURES_DIR}/${fixture}")
     configure_file("${FIXTURE_DIR}/compile_commands.json.in"

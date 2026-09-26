@@ -23,6 +23,31 @@ TEST_CASE("headers are recognised by their extension", "[api]") {
     CHECK_FALSE(is_header("a/vector"));
 }
 
+TEST_CASE("a declaration in another file does not interrupt a comment", "[api]") {
+    // first.h includes second.h between its declarations, so the two files'
+    // declarations interleave in one scope, and each file ends with a
+    // documented declaration far into the file while the other file has one
+    // near its start. Offsets are per file: only same-file declarations may
+    // come "between" a comment and what it documents.
+    const fs::path fixture = fs::path{TEZCATL_FIXTURES_DIR} / "docs-files";
+    const Parser parser{default_resource_directory()};
+    const std::vector<CompileCommand> commands =
+        load_compilation_database(fs::path{TEZCATL_FIXTURE_DBS} / "docs-files");
+    REQUIRE(commands.size() == 1);
+    const ParsedUnit parsed = parser.parse(commands.front());
+    REQUIRE(parsed.errors.empty());
+    const std::vector<ApiEntity> found = find_api(parsed, [&fixture](const fs::path& file) {
+        return tezcatl::scan::is_within(file, fixture);
+    });
+    std::vector<std::string> rows(found.size());
+    std::ranges::transform(found, rows.begin(), [&fixture](const ApiEntity& e) {
+        return e.file.lexically_relative(fixture).generic_string() + ':' + std::to_string(e.line) +
+               ' ' + std::string{to_string(e.documentation)};
+    });
+    CHECK(rows == std::vector<std::string>{"first.h:1 none", "first.h:64 doxygen",
+                                           "second.h:1 none", "second.h:63 doxygen"});
+}
+
 TEST_CASE("the public API of the fixture headers and how each is documented", "[api]") {
     const fs::path fixture = fs::path{TEZCATL_FIXTURES_DIR} / "docs";
     const Parser parser{default_resource_directory()};
