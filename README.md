@@ -7,8 +7,8 @@ cycles and fan-in/fan-out. It emits machine-readable data alongside a human-read
 
 It is built to produce the baseline a code review of a C or C++ codebase starts from.
 
-> **Status: under construction.** Every metric is implemented, and `tezcatl report` writes them
-> all as one baseline. Every definition is in [docs/metrics.md](docs/metrics.md); the JSON
+> **Status: 0.1.0, the first release.** Every metric is implemented, and `tezcatl report` writes
+> them all as one baseline. Every definition is in [docs/metrics.md](docs/metrics.md); the JSON
 > report's shape is [docs/report.schema.json](docs/report.schema.json).
 
 **Self-review:** CI measures Tezcatl itself on every push, with its own test coverage, and keeps
