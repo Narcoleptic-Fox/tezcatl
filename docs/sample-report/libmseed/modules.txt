@@ -1,0 +1,6 @@
+# libmseed (github.com/EarthScope/libmseed): the library, its tests and examples,
+# and the JSON parser it bundles (yyjson, by its own MIT header).
+third-party/yyjson = yyjson.*
+tests = test/**
+examples = example/**
+libmseed = *
