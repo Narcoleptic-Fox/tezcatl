@@ -132,10 +132,12 @@ if its root-relative path matches any test glob (same syntax as module rules). T
 replaces them all. A directory named `testing` matches none of the defaults.
 
 In the report, test code counts toward a module's *test* lines only. Complexity, Halstead
-figures and documentation coverage describe production code: a test's complexity is not the
-product's, and a test header is not public API. Test functions and declarations are still
-listed in `functions.csv` and `api.csv`, and `files.csv` and every file, function and
-declaration in `report.json` carry the role, so nothing is hidden, only kept out of the totals.
+figures, documentation coverage and imported test coverage describe production code: a test's
+complexity is not the product's, a test header is not public API, and a test covers its own
+lines simply by running: counted, libmseed's 3,848 test lines would lift its line coverage from
+46.5% to 54.2%. Test functions and declarations are still listed in `functions.csv` and
+`api.csv`, and `files.csv` and every file, function and declaration in `report.json` carry the
+role, so nothing is hidden, only kept out of the totals.
 
 ### Parsed and unparsed files
 

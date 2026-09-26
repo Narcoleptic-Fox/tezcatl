@@ -49,6 +49,11 @@ std::map<std::string, Accumulator> accumulate(const ReportData& data, const File
     }
     if (data.coverage.has_value()) {
         for (const auto& [file, counts] : data.coverage->files) {
+            // Tests run their own lines: counting them would lift the
+            // project's coverage by the size of its test suite.
+            if (naming.is_test(file)) {
+                continue;
+            }
             ModuleRow& row = result[key_of(file)].row;
             row.coverage = row.coverage.value_or(coverage::Counts{});
             *row.coverage += counts;

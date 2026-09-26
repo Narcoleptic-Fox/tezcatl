@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace fs = std::filesystem;
 using namespace tezcatl;
@@ -38,6 +39,29 @@ TEST_CASE("module rows add up every metric, production and test apart", "[report
         "TOTAL,3,2,14,11,2,1,5,4,3,5.33,3.0,12,12,1,0,16.00,16.00,2,1,50.0,10,8,4,2,2,1,,,\n";
     // clang-format on
     CHECK(out.str() == expected);
+}
+
+TEST_CASE("a test file's own coverage is not the module's", "[report]") {
+    // The sample's coverage covers only production code, so this adds a
+    // record for its test file: a test runs its own lines, and counting them
+    // would lift module a from 8 of 10 lines to 12 of 14.
+    const report::FileNaming naming = test::sample_naming();
+    report::ReportData data = test::sample_report();
+    report::AttributedCoverage covered = data.coverage.value_or(report::AttributedCoverage{});
+    covered.files.emplace_back(test::sample_root() / "a/tests/t.c",
+                               coverage::Counts{.lines = 4,
+                                                .lines_covered = 4,
+                                                .branches = 0,
+                                                .branches_covered = 0,
+                                                .functions = 1,
+                                                .functions_covered = 1});
+    data.coverage = covered;
+    const std::vector<report::ModuleRow> rows = report::summarize_modules(data, naming);
+    REQUIRE(rows.size() == 2);
+    CHECK(rows.at(1).coverage.value_or(coverage::Counts{}).lines == 10);
+    CHECK(rows.at(1).coverage.value_or(coverage::Counts{}).lines_covered == 8);
+    CHECK(report::summarize_project(data, naming).coverage.value_or(coverage::Counts{}).lines ==
+          10);
 }
 
 TEST_CASE("without coverage data the coverage columns are empty", "[report]") {

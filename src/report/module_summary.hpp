@@ -17,9 +17,10 @@ namespace tezcatl::report {
 
 /// One module's figures across every metric: the table the SOW asks for.
 ///
-/// Lines are split into production and test code. Complexity, Halstead and
-/// documentation describe production code only: a test's complexity is not
-/// the product's. The include figures are the module graph's.
+/// Lines are split into production and test code. Complexity, Halstead,
+/// documentation and coverage describe production code only: a test's
+/// complexity is not the product's, and a test covers its own lines by
+/// running. The include figures are the module graph's.
 struct ModuleRow {
     std::string module;
     std::size_t files = 0;        ///< source files, production and test
