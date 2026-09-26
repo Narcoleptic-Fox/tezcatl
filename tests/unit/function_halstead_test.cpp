@@ -1,3 +1,4 @@
+#include "analysis/functions.hpp"
 #include "parse/compilation_database.hpp"
 #include "parse/functions.hpp"
 #include "parse/translation_unit.hpp"
@@ -11,6 +12,8 @@
 
 namespace fs = std::filesystem;
 using namespace tezcatl::parse;
+using tezcatl::analysis::FunctionInfo;
+using tezcatl::analysis::measure_functions;
 
 TEST_CASE("Halstead counts of each function match the hand counts in the fixture",
           "[halstead][parse]") {
@@ -19,7 +22,7 @@ TEST_CASE("Halstead counts of each function match the hand counts in the fixture
     REQUIRE(commands.size() == 1);
     const ParsedUnit parsed = parser.parse(commands.at(0));
     REQUIRE(parsed.errors.empty());
-    const auto functions = find_functions(parsed, [](const fs::path&) { return true; });
+    const auto functions = measure_functions(parsed, [](const fs::path&) { return true; });
     std::vector<std::string> rows(functions.size());
     std::ranges::transform(functions, rows.begin(), [](const FunctionInfo& f) {
         const auto& h = f.halstead;

@@ -19,7 +19,7 @@ struct FunctionTotals {
     double volume = 0.0;
     double effort = 0.0;
 
-    void add(const parse::FunctionInfo& function) {
+    void add(const analysis::FunctionInfo& function) {
         complexities.push_back(function.complexity);
         volume += function.halstead.volume();
         effort += function.halstead.effort();
@@ -78,12 +78,12 @@ void write_file_table(std::ostream& out, const std::vector<FileLines>& files,
     }
 }
 
-void write_function_table(std::ostream& out, const std::vector<parse::FunctionInfo>& functions,
+void write_function_table(std::ostream& out, const std::vector<analysis::FunctionInfo>& functions,
                           const FileNaming& naming, const metrics::Thresholds& thresholds) {
     out << "file,line,column,kind,name,module,complexity,rating,"
            "distinct_operators,distinct_operands,total_operators,total_operands,"
            "volume,difficulty,effort\n";
-    for (const parse::FunctionInfo& function : functions) {
+    for (const analysis::FunctionInfo& function : functions) {
         const metrics::Halstead& h = function.halstead;
         out << csv_field(naming.relative(function.file)) << ',' << function.line << ','
             << function.column << ',' << parse::to_string(function.kind) << ','
@@ -96,11 +96,11 @@ void write_function_table(std::ostream& out, const std::vector<parse::FunctionIn
     }
 }
 
-void write_function_summary(std::ostream& out, const std::vector<parse::FunctionInfo>& functions,
+void write_function_summary(std::ostream& out, const std::vector<analysis::FunctionInfo>& functions,
                             const FileNaming& naming, const metrics::Thresholds& thresholds) {
     std::map<std::string, FunctionTotals> by_module;
     FunctionTotals all;
-    for (const parse::FunctionInfo& function : functions) {
+    for (const analysis::FunctionInfo& function : functions) {
         by_module[naming.module_of(function.file)].add(function);
         all.add(function);
     }

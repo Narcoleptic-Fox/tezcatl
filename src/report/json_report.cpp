@@ -108,7 +108,7 @@ json files(const ReportData& data, const FileNaming& naming) {
 }
 
 json functions(const ReportData& data, const FileNaming& naming) {
-    return array_of(data.functions, [&](const parse::FunctionInfo& f) {
+    return array_of(data.functions, [&](const analysis::FunctionInfo& f) {
         const metrics::Halstead& h = f.halstead;
         return json{{"file", naming.relative(f.file)},
                     {"line", f.line},

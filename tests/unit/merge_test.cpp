@@ -1,4 +1,4 @@
-#include "parse/functions.hpp"
+#include "analysis/functions.hpp"
 #include "parse/merge.hpp"
 
 #include <catch2/catch_test_macros.hpp>
@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <vector>
 
-using tezcatl::parse::FunctionInfo;
+using tezcatl::analysis::FunctionInfo;
 using tezcatl::parse::merge_duplicates;
 
 TEST_CASE("of repeats at one location, the first seen is kept", "[merge]") {

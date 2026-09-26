@@ -1,11 +1,11 @@
 #pragma once
 
+#include "analysis/functions.hpp"
 #include "coverage/model.hpp"
 #include "coverage/path_map.hpp"
 #include "metrics/loc.hpp"
 #include "metrics/summary.hpp"
 #include "parse/api.hpp"
-#include "parse/functions.hpp"
 #include "report/naming.hpp"
 
 #include <filesystem>
@@ -38,13 +38,13 @@ void write_file_table(std::ostream& out, const std::vector<FileLines>& files,
 /// One row per function: file,line,column,kind,name,module,complexity,
 /// rating, then Halstead's distinct_operators,distinct_operands,
 /// total_operators,total_operands,volume,difficulty,effort.
-void write_function_table(std::ostream& out, const std::vector<parse::FunctionInfo>& functions,
+void write_function_table(std::ostream& out, const std::vector<analysis::FunctionInfo>& functions,
                           const FileNaming& naming, const metrics::Thresholds& thresholds);
 
 /// One row per module and a TOTAL row: module,functions,mean,median,p90,max,
 /// flagged,high (the complexity distribution),volume,effort (Halstead
 /// totals).
-void write_function_summary(std::ostream& out, const std::vector<parse::FunctionInfo>& functions,
+void write_function_summary(std::ostream& out, const std::vector<analysis::FunctionInfo>& functions,
                             const FileNaming& naming, const metrics::Thresholds& thresholds);
 
 /// One row per public API declaration: file,line,column,kind,name,module,

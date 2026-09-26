@@ -1,14 +1,13 @@
 #include "parse/functions.hpp"
 
-#include "metrics/complexity.hpp"
 #include "parse/clang_string.hpp"
 #include "parse/cursors.hpp"
-#include "parse/function_tokens.hpp"
 
 #include <algorithm>
 #include <optional>
 #include <ranges>
 #include <stdexcept>
+#include <tuple>
 
 namespace tezcatl::parse {
 
@@ -85,7 +84,7 @@ struct VisitContext {
     CXTranslationUnit unit = nullptr;
     const fs::path* directory = nullptr; ///< for resolving relative file names
     const FileFilter* include_file = nullptr;
-    std::vector<FunctionInfo>* found = nullptr;
+    std::vector<FunctionDefinition>* found = nullptr;
     std::string enclosing_function; ///< qualified name, empty outside any function
 };
 
@@ -110,14 +109,12 @@ CXChildVisitResult visit(CXCursor cursor, CXCursor /*parent*/, CXClientData data
     }
 
     if (has_body(cursor) && !location.file.empty() && (*context.include_file)(location.file)) {
-        const FunctionTokens tokens{context.unit, cursor};
         context.found->push_back({.file = location.file,
                                   .line = location.line,
                                   .column = location.column,
                                   .kind = *kind,
                                   .name = name,
-                                  .complexity = metrics::cyclomatic_complexity(tokens),
-                                  .halstead = metrics::measure_halstead(tokens)});
+                                  .cursor = cursor});
     }
 
     // Visit the body with this function as the enclosing one, so lambdas
@@ -133,19 +130,21 @@ CXChildVisitResult visit(CXCursor cursor, CXCursor /*parent*/, CXClientData data
 
 } // namespace
 
-std::vector<FunctionInfo> find_functions(const ParsedUnit& parsed, const FileFilter& include_file) {
+std::vector<FunctionDefinition> find_definitions(const ParsedUnit& parsed,
+                                                 const FileFilter& include_file) {
     if (!parsed.unit) {
-        throw std::invalid_argument("find_functions: " + parsed.file.string() +
+        throw std::invalid_argument("find_definitions: " + parsed.file.string() +
                                     " has no translation unit");
     }
-    std::vector<FunctionInfo> found;
+    std::vector<FunctionDefinition> found;
     VisitContext context{.unit = parsed.unit.get(),
                          .directory = &parsed.directory,
                          .include_file = &include_file,
                          .found = &found,
                          .enclosing_function = {}};
     clang_visitChildren(clang_getTranslationUnitCursor(parsed.unit.get()), visit, &context);
-    std::ranges::sort(found);
+    std::ranges::sort(
+        found, {}, [](const FunctionDefinition& d) { return std::tie(d.file, d.line, d.column); });
     return found;
 }
 

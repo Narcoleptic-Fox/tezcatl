@@ -1,7 +1,7 @@
 #include "cli/functions_command.hpp"
 
+#include "analysis/functions.hpp"
 #include "cli/collect.hpp"
-#include "parse/functions.hpp"
 #include "report/tables.hpp"
 
 #include <format>
@@ -16,7 +16,7 @@ int run_functions(const FunctionsOptions& options, const Streams& streams) {
     metrics::validate(options.thresholds);
     const Project project{options.project};
     const Collected found = collect(project, {.functions = true}, err);
-    const std::vector<parse::FunctionInfo>& functions = found.functions;
+    const std::vector<analysis::FunctionInfo>& functions = found.functions;
 
     if (options.summary) {
         report::write_function_summary(out, functions, project.naming(), options.thresholds);

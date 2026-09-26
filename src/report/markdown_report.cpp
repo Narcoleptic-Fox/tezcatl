@@ -152,10 +152,10 @@ void lines_section(std::ostream& out, const std::vector<ModuleRow>& rows, const 
     out << '\n';
 }
 
-std::vector<const parse::FunctionInfo*> production_functions(const ReportData& data,
-                                                             const FileNaming& naming) {
-    std::vector<const parse::FunctionInfo*> result;
-    for (const parse::FunctionInfo& function : data.functions) {
+std::vector<const analysis::FunctionInfo*> production_functions(const ReportData& data,
+                                                                const FileNaming& naming) {
+    std::vector<const analysis::FunctionInfo*> result;
+    for (const analysis::FunctionInfo& function : data.functions) {
         if (!naming.is_test(function.file)) {
             result.push_back(&function);
         }
@@ -175,7 +175,7 @@ void complexity_section(std::ostream& out, const ReportData& data, const FileNam
             << std::format("{:.2f} | {:.1f}", c.mean, c.median) << " | " << c.p90 << " | " << c.max
             << " | " << c.flagged << " | " << c.high << " |\n";
     }
-    std::vector<const parse::FunctionInfo*> functions = production_functions(data, naming);
+    std::vector<const analysis::FunctionInfo*> functions = production_functions(data, naming);
     std::ranges::stable_sort(
         functions, [](const auto* a, const auto* b) { return a->complexity > b->complexity; });
     const std::size_t shown = std::min(functions.size(), most_complex_shown);
@@ -184,7 +184,7 @@ void complexity_section(std::ostream& out, const ReportData& data, const FileNam
         << " production functions; all of them are in `functions.csv`.\n\n"
         << "| Complexity | Function | Where | Module |\n|---:|---|---|---|\n";
     for (std::size_t i = 0; i < shown; ++i) {
-        const parse::FunctionInfo& f = *functions.at(i);
+        const analysis::FunctionInfo& f = *functions.at(i);
         out << "| " << f.complexity << " | " << code(f.name) << " | "
             << location(naming, f.file, f.line) << " | " << code(naming.module_of(f.file))
             << " |\n";
@@ -202,7 +202,7 @@ void halstead_section(std::ostream& out, const ReportData& data, const FileNamin
         out << "| " << code(r.module) << " | "
             << std::format("{:.0f} | {:.0f}", r.halstead_volume, r.halstead_effort) << " |\n";
     }
-    std::vector<const parse::FunctionInfo*> functions = production_functions(data, naming);
+    std::vector<const analysis::FunctionInfo*> functions = production_functions(data, naming);
     std::ranges::stable_sort(functions, [](const auto* a, const auto* b) {
         return a->halstead.effort() > b->halstead.effort();
     });
@@ -210,7 +210,7 @@ void halstead_section(std::ostream& out, const ReportData& data, const FileNamin
     out << "\n### Highest effort\n\n| Effort | Volume | Difficulty | Function | Where |\n"
         << "|---:|---:|---:|---|---|\n";
     for (std::size_t i = 0; i < shown; ++i) {
-        const parse::FunctionInfo& f = *functions.at(i);
+        const analysis::FunctionInfo& f = *functions.at(i);
         out << "| "
             << std::format("{:.0f} | {:.0f} | {:.1f}", f.halstead.effort(), f.halstead.volume(),
                            f.halstead.difficulty())

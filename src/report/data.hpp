@@ -1,9 +1,9 @@
 #pragma once
 
+#include "analysis/functions.hpp"
 #include "metrics/loc.hpp"
 #include "metrics/summary.hpp"
 #include "parse/api.hpp"
-#include "parse/functions.hpp"
 #include "report/include_graph.hpp"
 #include "report/tables.hpp"
 
@@ -33,7 +33,7 @@ struct ReportData {
     Provenance provenance;
     metrics::Thresholds thresholds;
     std::vector<FileLines> files; ///< every source file under the root, sorted
-    std::vector<parse::FunctionInfo> functions;
+    std::vector<analysis::FunctionInfo> functions;
     std::vector<parse::ApiEntity> api;
     IncludeGraph includes;
     std::optional<AttributedCoverage> coverage; ///< only if coverage data was given

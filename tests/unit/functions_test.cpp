@@ -1,3 +1,4 @@
+#include "analysis/functions.hpp"
 #include "parse/compilation_database.hpp"
 #include "parse/functions.hpp"
 #include "parse/merge.hpp"
@@ -15,6 +16,8 @@
 
 namespace fs = std::filesystem;
 using namespace tezcatl::parse;
+using tezcatl::analysis::FunctionInfo;
+using tezcatl::analysis::measure_functions;
 
 namespace {
 
@@ -68,7 +71,7 @@ TEST_CASE("every function definition in the fixture project is found", "[parse]"
         INFO(parsed.file.string());
         REQUIRE(parsed.errors.empty());
         REQUIRE(parsed.unit);
-        const auto found = find_functions(parsed, [](const fs::path& file) {
+        const auto found = measure_functions(parsed, [](const fs::path& file) {
             return tezcatl::scan::is_within(file, fixture_dir());
         });
         functions.insert(functions.end(), found.begin(), found.end());
@@ -111,7 +114,7 @@ TEST_CASE("functions in system headers are never reported, whatever the filter",
     const auto commands = load_compilation_database(fixture_db());
     const ParsedUnit parsed = parser.parse(commands.at(1));
     REQUIRE(parsed.errors.empty());
-    const auto found = find_functions(parsed, [](const fs::path&) { return true; });
+    const auto found = measure_functions(parsed, [](const fs::path&) { return true; });
     std::vector<std::string> names(found.size());
     std::ranges::transform(found, names.begin(), [](const FunctionInfo& f) { return f.name; });
     const std::vector<std::string> expected{"from_b()", "geo::Point::sum()",
@@ -129,7 +132,7 @@ TEST_CASE("a unit that fails to parse reports errors and keeps what it found", "
     REQUIRE_FALSE(parsed.errors.empty());
     CHECK(parsed.errors.at(0).message.find("missing.hpp") != std::string::npos);
     REQUIRE(parsed.unit);
-    const auto found = find_functions(parsed, [](const fs::path&) { return true; });
+    const auto found = measure_functions(parsed, [](const fs::path&) { return true; });
     REQUIRE(found.size() == 1);
     CHECK(found.at(0).name == "still_found()");
 }

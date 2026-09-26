@@ -1,3 +1,4 @@
+#include "analysis/functions.hpp"
 #include "parse/compilation_database.hpp"
 #include "parse/functions.hpp"
 #include "parse/translation_unit.hpp"
@@ -12,6 +13,8 @@
 
 namespace fs = std::filesystem;
 using namespace tezcatl::parse;
+using tezcatl::analysis::FunctionInfo;
+using tezcatl::analysis::measure_functions;
 
 TEST_CASE("cyclomatic complexity matches the hand counts in the fixture", "[complexity]") {
     // The same source as a GCC-style C++20 command and as a clang-cl C++17
@@ -24,7 +27,7 @@ TEST_CASE("cyclomatic complexity matches the hand counts in the fixture", "[comp
     REQUIRE(commands.size() == 1);
     const ParsedUnit parsed = parser.parse(commands.at(0));
     REQUIRE(parsed.errors.empty());
-    const auto functions = find_functions(
+    const auto functions = measure_functions(
         parsed, [](const fs::path& file) { return file.filename() == "complexity.cpp"; });
     std::vector<std::string> rows(functions.size());
     std::ranges::transform(functions, rows.begin(), [](const FunctionInfo& f) {

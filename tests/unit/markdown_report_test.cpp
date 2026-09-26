@@ -86,7 +86,7 @@ TEST_CASE("a long list is cut and names the CSV with all of it", "[report]") {
     report::ReportData data = test::sample_report();
     constexpr unsigned extra = 25;
     for (unsigned i = 0; i < extra; ++i) {
-        parse::FunctionInfo copy = data.functions.front();
+        analysis::FunctionInfo copy = data.functions.front();
         copy.line = 100 + i;
         data.functions.push_back(copy);
     }

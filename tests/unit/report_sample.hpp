@@ -35,13 +35,13 @@ inline report::ReportData sample_report() {
         .distinct_operators = 2, .distinct_operands = 2, .total_operators = 2, .total_operands = 2};
     const auto function = [&](const char* file, unsigned line, unsigned complexity,
                               const metrics::Halstead& h) {
-        return parse::FunctionInfo{.file = root / file,
-                                   .line = line,
-                                   .column = 1,
-                                   .kind = parse::FunctionKind::function,
-                                   .name = "f" + std::to_string(line) + "()",
-                                   .complexity = complexity,
-                                   .halstead = h};
+        return analysis::FunctionInfo{.file = root / file,
+                                      .line = line,
+                                      .column = 1,
+                                      .kind = parse::FunctionKind::function,
+                                      .name = "f" + std::to_string(line) + "()",
+                                      .complexity = complexity,
+                                      .halstead = h};
     };
     const auto api = [&](const char* file, unsigned line, parse::DocStyle style) {
         return parse::ApiEntity{.file = root / file,

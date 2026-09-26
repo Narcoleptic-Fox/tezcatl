@@ -33,7 +33,7 @@ std::map<std::string, Accumulator> accumulate(const ReportData& data, const File
         row.files_parsed += file.parsed ? 1 : 0;
         (naming.is_test(file.file) ? row.test : row.production) += file.counts;
     }
-    for (const parse::FunctionInfo& function : data.functions) {
+    for (const analysis::FunctionInfo& function : data.functions) {
         if (naming.is_test(function.file)) {
             continue;
         }

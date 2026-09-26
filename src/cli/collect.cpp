@@ -30,7 +30,7 @@ Collected collect(const Project& project, Collect what, std::ostream& err) {
         [&](std::size_t unit, const parse::ParsedUnit& parsed) {
             Collected& found = per_unit.at(unit);
             if (what.functions) {
-                found.functions = parse::find_functions(parsed, in_project);
+                found.functions = analysis::measure_functions(parsed, in_project);
             }
             if (what.api) {
                 found.api = parse::find_api(parsed, in_project);

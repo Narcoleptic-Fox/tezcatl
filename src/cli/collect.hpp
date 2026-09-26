@@ -1,8 +1,8 @@
 #pragma once
 
+#include "analysis/functions.hpp"
 #include "cli/project.hpp"
 #include "parse/api.hpp"
-#include "parse/functions.hpp"
 #include "parse/includes.hpp"
 
 #include <filesystem>
@@ -23,7 +23,7 @@ struct Collect {
 /// more than one unit (inline functions, headers) are listed once.
 struct Collected {
     ScanTotals totals;
-    std::vector<parse::FunctionInfo> functions;
+    std::vector<analysis::FunctionInfo> functions;
     std::vector<parse::ApiEntity> api;
     std::vector<parse::IncludeEdge> includes;
     /// The project's main files of the units parsed: include graph nodes

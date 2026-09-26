@@ -1,6 +1,5 @@
 #pragma once
 
-#include "metrics/halstead.hpp"
 #include "parse/translation_unit.hpp"
 
 #include <compare>
@@ -30,9 +29,9 @@ enum class FunctionKind : std::uint8_t {
 /// does not declare one.
 [[nodiscard]] std::optional<FunctionKind> function_kind(CXCursorKind kind) noexcept;
 
-/// A function definition with a body, as written in the source, and its
-/// per-function metrics.
-struct FunctionInfo {
+/// A function definition with a body, as written in the source: where it
+/// is, what kind, and its name. Measuring it is analysis's job.
+struct FunctionDefinition {
     std::filesystem::path file; ///< where the definition is written
     unsigned line = 0;          ///< 1-based, of the function's name (for a lambda, its '[')
     unsigned column = 0;        ///< 1-based, in bytes
@@ -41,22 +40,7 @@ struct FunctionInfo {
     /// types, e.g. "geo::Point::sum()". A lambda is named after the function
     /// that contains it: "use_lambda()::(lambda)".
     std::string name;
-    /// McCabe cyclomatic complexity, as defined in docs/metrics.md.
-    unsigned complexity = 1;
-    /// Halstead's counts and measures, as defined in docs/metrics.md.
-    metrics::Halstead halstead;
-
-    /// Ordered by location, so a sorted list reads top to bottom per file.
-    friend std::strong_ordering operator<=>(const FunctionInfo& a, const FunctionInfo& b) {
-        if (const auto order = a.file <=> b.file; order != 0) {
-            return order;
-        }
-        if (const auto order = a.line <=> b.line; order != 0) {
-            return order;
-        }
-        return a.column <=> b.column;
-    }
-    friend bool operator==(const FunctionInfo& a, const FunctionInfo& b) { return (a <=> b) == 0; }
+    CXCursor cursor = clang_getNullCursor(); ///< valid while its translation unit is
 };
 
 /// Decides whether functions written in a file belong in the report.
@@ -69,7 +53,7 @@ using FileFilter = std::function<bool(const std::filesystem::path&)>;
 /// that includes them; the caller merges units.
 /// File names are made absolute against the unit's working directory before
 /// filtering. `parsed.unit` must not be null.
-[[nodiscard]] std::vector<FunctionInfo> find_functions(const ParsedUnit& parsed,
-                                                       const FileFilter& include_file);
+[[nodiscard]] std::vector<FunctionDefinition> find_definitions(const ParsedUnit& parsed,
+                                                               const FileFilter& include_file);
 
 } // namespace tezcatl::parse
