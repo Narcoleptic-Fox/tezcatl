@@ -282,10 +282,4 @@ std::vector<ApiEntity> find_api(const ParsedUnit& parsed, const FileFilter& incl
     return found;
 }
 
-void merge_duplicates(std::vector<ApiEntity>& entities) {
-    std::ranges::sort(entities);
-    const auto repeats = std::ranges::unique(entities);
-    entities.erase(repeats.begin(), repeats.end());
-}
-
 } // namespace tezcatl::parse

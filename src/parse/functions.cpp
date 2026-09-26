@@ -149,10 +149,4 @@ std::vector<FunctionInfo> find_functions(const ParsedUnit& parsed, const FileFil
     return found;
 }
 
-void merge_duplicates(std::vector<FunctionInfo>& functions) {
-    std::ranges::sort(functions);
-    const auto repeats = std::ranges::unique(functions);
-    functions.erase(repeats.begin(), repeats.end());
-}
-
 } // namespace tezcatl::parse

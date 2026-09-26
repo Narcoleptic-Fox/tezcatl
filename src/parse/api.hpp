@@ -68,8 +68,4 @@ struct ApiEntity {
 [[nodiscard]] std::vector<ApiEntity> find_api(const ParsedUnit& parsed,
                                               const FileFilter& include_file);
 
-/// Sorts by location and removes the repeats that arise when a header is
-/// included by several translation units.
-void merge_duplicates(std::vector<ApiEntity>& entities);
-
 } // namespace tezcatl::parse

@@ -1,5 +1,7 @@
 #include "cli/collect.hpp"
 
+#include "parse/merge.hpp"
+
 #include <filesystem>
 #include <iterator>
 #include <vector>

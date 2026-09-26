@@ -30,8 +30,13 @@ the project's own compile flags from `compile_commands.json`.
 - Location is where the name is written (for a lambda, its `[`). A function produced by a macro
   is located where the macro is used.
 - A function defined in a header is reported once, however many translation units include it.
+- **A source file compiled more than once** (one file built into several programs with different
+  `-D` flags) is measured as its **first** compile command in the database: each function is
+  reported once, with that configuration's figures. Earthworm builds 62 of its C files this way.
 - Functions in system headers, and in files under the build directory (fetched dependencies,
   generated code), are not part of the project and are not reported.
+- Database entries for other languages (Fortran, assembly), which a database made by
+  intercepting a build records, are counted and skipped, not parsed.
 - **A translation unit that fails to parse is an error**, not a smaller result: the run exits
   non-zero unless `--allow-parse-errors` is given, and every error is printed. Warnings are not
   failures: the project's `-Werror` or `/WX` is overridden while parsing, since a warning is a
@@ -45,8 +50,11 @@ an `#if` branch the configuration disables is not a function and has no complexi
 is clang, even for an MSVC database, and clang defines `__clang__`. Code that tests for the
 compiler rather than the platform therefore takes clang's branch: Catch2 enables its Windows
 SEH handlers under `#if defined(_MSC_VER) && !defined(__clang__)`, so a `cl.exe` build compiles
-five functions that Tezcatl never sees. To measure another configuration, generate its
-compilation database and run again.
+five functions that Tezcatl never sees. The same holds for a GCC build: SQLite's amalgamation
+defines `GCC_VERSION` only when `!defined(__clang__)`, so where gcc compiles the one-line
+`__builtin_mul_overflow` form of `sqlite3MulInt64`, Tezcatl measures the portable fallback
+(complexity 11, not 1). To measure another configuration, generate its compilation database and
+run again.
 
 ## Lines of code
 

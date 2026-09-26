@@ -1,5 +1,6 @@
 #include "parse/api.hpp"
 #include "parse/compilation_database.hpp"
+#include "parse/merge.hpp"
 #include "parse/translation_unit.hpp"
 #include "scan/paths.hpp"
 

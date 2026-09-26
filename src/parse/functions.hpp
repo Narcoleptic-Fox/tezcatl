@@ -72,8 +72,4 @@ using FileFilter = std::function<bool(const std::filesystem::path&)>;
 [[nodiscard]] std::vector<FunctionInfo> find_functions(const ParsedUnit& parsed,
                                                        const FileFilter& include_file);
 
-/// Sorts `functions` by location and removes the repeats that arise when a
-/// header's functions are found once per translation unit including it.
-void merge_duplicates(std::vector<FunctionInfo>& functions);
-
 } // namespace tezcatl::parse
