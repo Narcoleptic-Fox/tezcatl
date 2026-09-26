@@ -104,6 +104,15 @@ TEST_CASE("files no unit parsed are counted and named at the top", "[report]") {
     CHECK_THAT(markdown(data), ContainsSubstring("All 3 source files under the root were parsed."));
 }
 
+TEST_CASE("skipped database entries are stated at the top", "[report]") {
+    report::ReportData data = test::sample_report();
+    CHECK_THAT(markdown(data), !ContainsSubstring("other languages"));
+    data.provenance.units_skipped = 120;
+    CHECK_THAT(markdown(data),
+               ContainsSubstring("0 with errors. 120 database entries for other languages (such "
+                                 "as Fortran) were not parsed."));
+}
+
 TEST_CASE("parse errors are stated at the top", "[report]") {
     report::ReportData data = test::sample_report();
     CHECK_THAT(markdown(data), !ContainsSubstring("incomplete"));

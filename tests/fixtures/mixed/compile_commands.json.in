@@ -1,0 +1,12 @@
+[
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["gcc", "-c", "answer.c"],
+    "file": "answer.c"
+  },
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["gfortran", "-c", "hello.f90"],
+    "file": "hello.f90"
+  }
+]

@@ -91,7 +91,8 @@ json input(const ReportData& data, const FileNaming& naming) {
             {"compilation_database", data.provenance.compilation_database.generic_string()},
             {"coverage", coverage_inputs},
             {"translation_units", data.provenance.translation_units},
-            {"units_with_errors", data.provenance.units_with_errors}};
+            {"units_with_errors", data.provenance.units_with_errors},
+            {"units_skipped", data.provenance.units_skipped}};
 }
 
 json files(const ReportData& data, const FileNaming& naming) {

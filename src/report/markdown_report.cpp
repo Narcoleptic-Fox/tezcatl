@@ -63,6 +63,10 @@ void header(std::ostream& out, const ReportData& data, const FileNaming& naming)
         << "compilation database in " << code(p.compilation_database.generic_string()) << ": "
         << p.translation_units << " translation units parsed, " << p.units_with_errors
         << " with errors.";
+    if (p.units_skipped > 0) {
+        out << " " << p.units_skipped
+            << " database entries for other languages (such as Fortran) were not parsed.";
+    }
     if (p.units_with_errors > 0) {
         out << " **The figures below are incomplete:** units that fail to parse contribute "
                "only what libclang could recover.";

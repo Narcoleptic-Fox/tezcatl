@@ -40,14 +40,16 @@
         "compilation_database",
         "coverage",
         "translation_units",
-        "units_with_errors"
+        "units_with_errors",
+        "units_skipped"
       ],
       "properties": {
         "root": { "type": "string" },
         "compilation_database": { "type": "string" },
         "coverage": { "type": "array", "items": { "type": "string" } },
         "translation_units": { "$ref": "#/definitions/count" },
-        "units_with_errors": { "$ref": "#/definitions/count" }
+        "units_with_errors": { "$ref": "#/definitions/count" },
+        "units_skipped": { "$ref": "#/definitions/count" }
       }
     },
     "settings": {

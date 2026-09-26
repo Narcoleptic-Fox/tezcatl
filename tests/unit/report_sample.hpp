@@ -57,7 +57,8 @@ inline report::ReportData sample_report() {
                        .compilation_database = root / "build",
                        .coverage_inputs = {root / "coverage.info"},
                        .translation_units = 3,
-                       .units_with_errors = 0};
+                       .units_with_errors = 0,
+                       .units_skipped = 0};
     data.files = {{.file = root / "a/x.c",
                    .counts = {.physical = 10, .blank = 1, .comment = 2, .code = 7},
                    .parsed = true},

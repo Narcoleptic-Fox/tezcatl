@@ -6,7 +6,8 @@ set(TEZCATL_FIXTURES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
 # generated into the build tree. The build tree is also where a real project's
 # database lives, outside the sources it describes.
 set(TEZCATL_FIXTURE_DBS "${CMAKE_CURRENT_BINARY_DIR}/fixture-dbs")
-foreach(fixture complexity coverage docs functions functions-broken functions-werror halstead includes)
+foreach(fixture complexity coverage docs functions functions-broken functions-werror halstead includes
+                mixed)
     set(FIXTURE_DIR "${TEZCATL_FIXTURES_DIR}/${fixture}")
     configure_file("${FIXTURE_DIR}/compile_commands.json.in"
                    "${TEZCATL_FIXTURE_DBS}/${fixture}/compile_commands.json" @ONLY)
@@ -215,6 +216,18 @@ set_tests_properties(
 add_test(NAME cli.docs.header_counted_once COMMAND tezcatl docs ${CALC_ARGS} --summary)
 set_tests_properties(cli.docs.header_counted_once
                      PROPERTIES PASS_REGULAR_EXPRESSION "\ncalc,3,0,0\\.0,0\nTOTAL,3,0,0\\.0,0\n")
+
+# A database made by intercepting a build (bear) records every compiler it
+# saw: the Fortran entry is counted and skipped, not a C parse error.
+add_test(NAME cli.functions.skips_other_languages
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/mixed" --root
+                 "${TEZCATL_FIXTURES_DIR}/mixed")
+set_tests_properties(
+    cli.functions.skips_other_languages
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION
+        "\nanswer\\.c,1,5,function,answer\\(\\),[^\n]*\ntezcatl: parsed 1 translation units, 0 with errors[;] skipped 1 entries that are not C or C\\+\\+[;] 1 functions"
+)
 
 # Coverage import from tests/fixtures/coverage/data, recorded under
 # /coverage-fixture. Expected values are the tools' own, not Tezcatl's (see the

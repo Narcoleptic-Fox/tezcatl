@@ -2,6 +2,7 @@
 
 #include "parse/compilation_database.hpp"
 #include "scan/paths.hpp"
+#include "scan/source_files.hpp"
 
 #include <ostream>
 
@@ -56,6 +57,10 @@ ScanTotals Project::scan(const std::function<void(const parse::ParsedUnit&)>& vi
     const parse::Parser parser{options_.resource_directory};
     ScanTotals totals;
     for (const parse::CompileCommand& command : parse::load_compilation_database(build_)) {
+        if (!scan::is_source_file(command.file)) {
+            ++totals.skipped;
+            continue;
+        }
         const parse::ParsedUnit parsed = parser.parse(command);
         ++totals.units;
         if (!parsed.errors.empty()) {
@@ -71,7 +76,11 @@ ScanTotals Project::scan(const std::function<void(const parse::ParsedUnit&)>& vi
 
 int Project::finish(const ScanTotals& totals, std::string_view detail, std::ostream& err) const {
     err << "tezcatl: parsed " << totals.units << " translation units, " << totals.units_with_errors
-        << " with errors; " << detail << '\n';
+        << " with errors; ";
+    if (totals.skipped > 0) {
+        err << "skipped " << totals.skipped << " entries that are not C or C++; ";
+    }
+    err << detail << '\n';
     return (totals.units_with_errors > 0 && !options_.allow_parse_errors) ? 1 : 0;
 }
 
