@@ -201,6 +201,10 @@ The no-op control stayed green in all three runs.
 | 132 | the sibling index never finds a declaration between comment and declaration (src/parse/api.cpp) | the docs fixture test, `cli.docs.summary`, `cli.docs.declarations` |
 | 133 | a struct inside a typedef not recognised | the docs fixture test, `cli.docs.summary` |
 
+| 134 | the code renames a function kind; the schema drops one (src/parse/functions.cpp, docs/report.schema.json) | *the schema's enums are exactly what the code writes*, which walks each enum until `to_string` says "unknown", so no third list exists to forget |
+| 135 | `--exclude` globs never match (src/cli/project.cpp) | *files matching an exclude glob are not the project*, `cli.report` |
+| 136 | `--exclude` bound to the test globs instead (src/cli/main.cpp) | `cli.report` |
+
 Performance changes are checked by output, not only by tests: each was run on Earthworm at 1 and
 16 threads and all twelve report files compared byte for byte with the run before it.
 
