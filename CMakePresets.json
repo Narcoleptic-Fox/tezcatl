@@ -56,6 +56,15 @@
       }
     },
     {
+      "name": "linux-coverage",
+      "displayName": "Linux, GCC, --coverage (for scripts/self-report.sh)",
+      "inherits": "linux-gcc",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "--coverage -O0",
+        "CMAKE_EXE_LINKER_FLAGS": "--coverage"
+      }
+    },
+    {
       "name": "linux-tsan",
       "displayName": "Linux, Clang, ThreadSanitizer (the parallel parse)",
       "inherits": "linux-clang",
@@ -70,7 +79,8 @@
     { "name": "linux-gcc", "configurePreset": "linux-gcc" },
     { "name": "linux-clang", "configurePreset": "linux-clang" },
     { "name": "linux-asan", "configurePreset": "linux-asan" },
-    { "name": "linux-tsan", "configurePreset": "linux-tsan" }
+    { "name": "linux-tsan", "configurePreset": "linux-tsan" },
+    { "name": "linux-coverage", "configurePreset": "linux-coverage" }
   ],
   "testPresets": [
     {
@@ -94,6 +104,11 @@
       "name": "linux-asan",
       "inherits": "base",
       "configurePreset": "linux-asan"
+    },
+    {
+      "name": "linux-coverage",
+      "inherits": "base",
+      "configurePreset": "linux-coverage"
     },
     {
       "name": "linux-tsan",

@@ -11,6 +11,9 @@ It is built to produce the baseline a code review of a C or C++ codebase starts 
 > all as one baseline. Every definition is in [docs/metrics.md](docs/metrics.md); the JSON
 > report's shape is [docs/report.schema.json](docs/report.schema.json).
 
+**Self-review:** CI measures Tezcatl itself on every push, with its own test coverage, and keeps
+the report with the run (`scripts/self-report.sh`, artifact `tezcatl-self-report`).
+
 **Sample:** [Earthworm](docs/sample-report/earthworm/), the open-source seismic processing system:
 929 C and C++ units, 0 parse errors, 78 s, with the complexity figures checked against lizard (99.0%
 agreement outside SQLite's amalgamation, measured in the same configuration).

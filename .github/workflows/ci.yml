@@ -54,6 +54,29 @@ jobs:
       - run: scripts\msvc.cmd cmake --build --preset windows-msvc
       - run: scripts\msvc.cmd ctest --preset windows-msvc
 
+  # Step 10: Tezcatl measures itself, with its own test coverage, and the
+  # report is kept with the run. Generated here rather than committed, so
+  # it can never describe a version of the code that no longer exists.
+  self-report:
+    runs-on: ${{ vars.CI_LINUX_RUNNER || 'ubuntu-24.04' }}
+    env:
+      LLVM_ROOT: /usr/lib/llvm-22
+    steps:
+      - uses: actions/checkout@v7
+      - if: runner.environment == 'github-hosted'
+        run: scripts/linux-deps.sh
+      - if: runner.environment != 'github-hosted'
+        run: scripts/linux-deps.sh --check
+      - run: cmake --preset linux-coverage -DCMAKE_CXX_COMPILER=g++
+      - run: cmake --build --preset linux-coverage
+      - run: ctest --preset linux-coverage
+      - run: scripts/self-report.sh self-report
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tezcatl-self-report
+          path: self-report/report
+          if-no-files-found: error
+
   lint:
     runs-on: ${{ vars.CI_LINUX_RUNNER || 'ubuntu-24.04' }}
     env:

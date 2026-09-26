@@ -1,0 +1,14 @@
+# Tezcatl by the directories of src/, one module per layer: parse <- metrics
+# <- analysis, then report, config, scan and graph, and cli on top. Used by
+# scripts/self-report.sh, which CI runs on every push.
+analysis = src/analysis/**
+cli = src/cli/**
+config = src/config/**
+coverage = src/coverage/**
+graph = src/graph/**
+metrics = src/metrics/**
+parse = src/parse/**
+report = src/report/**
+scan = src/scan/**
+version = src/tezcatl/**
+tests = tests/**
