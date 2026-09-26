@@ -24,12 +24,14 @@ TEST_CASE("the Markdown summary has one row per module and a total", "[report]")
     const std::string text = markdown(test::sample_report());
     // Figures from unit/module_summary_test.cpp. (unassigned) has no API and
     // no coverage records: n/a, not 0%.
-    CHECK_THAT(text, ContainsSubstring(
-                         "| `(unassigned)` | 4 | 0 | 1 | 1.00 | 1 | 0 | n/a | n/a | no |\n"));
     CHECK_THAT(text,
-               ContainsSubstring("| `a` | 7 | 4 | 2 | 7.50 | 12 | 1 | 50.0% | 80.0% | no |\n"));
-    CHECK_THAT(
-        text, ContainsSubstring("| **Total** | 11 | 4 | 3 | 5.33 | 12 | 1 | 50.0% | 80.0% |  |\n"));
+               ContainsSubstring(
+                   "| `(unassigned)` | 1 (1) | 4 | 0 | 1 | 1.00 | 1 | 0 | n/a | n/a | no |\n"));
+    CHECK_THAT(text, ContainsSubstring(
+                         "| `a` | 2 (1) | 7 | 4 | 2 | 7.50 | 12 | 1 | 50.0% | 80.0% | no |\n"));
+    CHECK_THAT(text,
+               ContainsSubstring(
+                   "| **Total** | 3 (2) | 11 | 4 | 3 | 5.33 | 12 | 1 | 50.0% | 80.0% |  |\n"));
 }
 
 TEST_CASE("the Markdown lists leave test code out", "[report]") {
@@ -76,7 +78,8 @@ TEST_CASE("without coverage data the report says so rather than 0%", "[report]")
     const std::string text = markdown(data);
     CHECK_THAT(
         text, ContainsSubstring("No coverage data was imported, so there are no coverage figures"));
-    CHECK_THAT(text, ContainsSubstring("| `a` | 7 | 4 | 2 | 7.50 | 12 | 1 | 50.0% | no |\n"));
+    CHECK_THAT(text,
+               ContainsSubstring("| `a` | 2 (1) | 7 | 4 | 2 | 7.50 | 12 | 1 | 50.0% | no |\n"));
 }
 
 TEST_CASE("a long list is cut and names the CSV with all of it", "[report]") {

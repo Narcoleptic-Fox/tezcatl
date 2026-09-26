@@ -97,15 +97,17 @@ void header(std::ostream& out, const ReportData& data, const FileNaming& naming)
 void summary(std::ostream& out, const std::vector<ModuleRow>& rows, const ModuleRow& total,
              bool with_coverage) {
     out << "## Summary\n\n"
-        << "| Module | Code lines | Test code lines | Functions | Mean complexity | Max | "
+        << "| Module | Files (parsed) | Code lines | Test code lines | Functions | Mean complexity "
+           "| Max | "
            "Over threshold | Documented |"
         << (with_coverage ? " Line coverage |" : "") << " In a cycle |\n"
-        << "|---|---:|---:|---:|---:|---:|---:|---:|" << (with_coverage ? "---:|" : "") << "---|\n";
+        << "|---|---:|---:|---:|---:|---:|---:|---:|---:|" << (with_coverage ? "---:|" : "")
+        << "---|\n";
     const auto row = [&](const ModuleRow& r, bool is_total) {
-        out << "| " << (is_total ? "**Total**" : code(r.module)) << " | " << r.production.code
-            << " | " << r.test.code << " | " << r.complexity.count << " | "
-            << std::format("{:.2f}", r.complexity.mean) << " | " << r.complexity.max << " | "
-            << r.complexity.flagged << " | "
+        out << "| " << (is_total ? "**Total**" : code(r.module)) << " | " << r.files << " ("
+            << r.files_parsed << ") | " << r.production.code << " | " << r.test.code << " | "
+            << r.complexity.count << " | " << std::format("{:.2f}", r.complexity.mean) << " | "
+            << r.complexity.max << " | " << r.complexity.flagged << " | "
             << percent(r.documentation.documented, r.documentation.entities) << " |";
         if (with_coverage) {
             out << ' '
@@ -133,12 +135,14 @@ void lines_section(std::ostream& out, const std::vector<ModuleRow>& rows, const 
         << " physical (" << total.production.comment << " comment, " << total.production.blank
         << " blank). Test: " << total.test.code << " code lines of " << total.test.physical
         << ".\n\n"
-        << "| Module | Files | Physical | Code | Comment | Blank | Test physical | Test code |\n"
-        << "|---|---:|---:|---:|---:|---:|---:|---:|\n";
+        << "| Module | Files | Parsed | Physical | Code | Comment | Blank | Test physical | Test "
+           "code |\n"
+        << "|---|---:|---:|---:|---:|---:|---:|---:|---:|\n";
     for (const ModuleRow& r : rows) {
-        out << "| " << code(r.module) << " | " << r.files << " | " << r.production.physical << " | "
-            << r.production.code << " | " << r.production.comment << " | " << r.production.blank
-            << " | " << r.test.physical << " | " << r.test.code << " |\n";
+        out << "| " << code(r.module) << " | " << r.files << " | " << r.files_parsed << " | "
+            << r.production.physical << " | " << r.production.code << " | " << r.production.comment
+            << " | " << r.production.blank << " | " << r.test.physical << " | " << r.test.code
+            << " |\n";
     }
     out << '\n';
 }

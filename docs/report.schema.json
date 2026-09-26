@@ -302,6 +302,7 @@
       "required": [
         "module",
         "files",
+        "files_parsed",
         "lines",
         "complexity",
         "halstead",
@@ -312,6 +313,7 @@
       "properties": {
         "module": { "type": "string" },
         "files": { "$ref": "#/definitions/count" },
+        "files_parsed": { "$ref": "#/definitions/count" },
         "lines": {
           "type": "object",
           "additionalProperties": false,

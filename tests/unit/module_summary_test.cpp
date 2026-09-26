@@ -27,15 +27,15 @@ TEST_CASE("module rows add up every metric, production and test apart", "[report
     // complexities 3, 12, 1 (mean 5.33, median 3, p90 rank 3 is 12).
     // clang-format off: one row per line
     const std::string expected =
-        "module,files,production_physical,production_code,production_comment,production_blank,"
+        "module,files,files_parsed,production_physical,production_code,production_comment,production_blank,"
         "test_physical,test_code,functions,complexity_mean,complexity_median,complexity_p90,"
         "complexity_max,flagged,high,halstead_volume,halstead_effort,api,documented,"
         "documented_percent,coverage_lines,coverage_lines_covered,coverage_branches,"
         "coverage_branches_covered,coverage_functions,coverage_functions_covered,fan_in,fan_out,"
         "cycle\n"
-        "(unassigned),1,4,4,0,0,0,0,1,1.00,1.0,1,1,0,0,0.00,0.00,0,0,0.0,0,0,0,0,0,0,0,1,\n"
-        "a,2,10,7,2,1,5,4,2,7.50,7.5,12,12,1,0,16.00,16.00,2,1,50.0,10,8,4,2,2,1,1,0,\n"
-        "TOTAL,3,14,11,2,1,5,4,3,5.33,3.0,12,12,1,0,16.00,16.00,2,1,50.0,10,8,4,2,2,1,,,\n";
+        "(unassigned),1,1,4,4,0,0,0,0,1,1.00,1.0,1,1,0,0,0.00,0.00,0,0,0.0,0,0,0,0,0,0,0,1,\n"
+        "a,2,1,10,7,2,1,5,4,2,7.50,7.5,12,12,1,0,16.00,16.00,2,1,50.0,10,8,4,2,2,1,1,0,\n"
+        "TOTAL,3,2,14,11,2,1,5,4,3,5.33,3.0,12,12,1,0,16.00,16.00,2,1,50.0,10,8,4,2,2,1,,,\n";
     // clang-format on
     CHECK(out.str() == expected);
 }
@@ -50,8 +50,8 @@ TEST_CASE("without coverage data the coverage columns are empty", "[report]") {
     std::ostringstream out;
     report::write_module_table(out, report::summarize_modules(data, naming),
                                report::summarize_project(data, naming));
-    CHECK(
-        out.str().ends_with("\n(unassigned),1,1,1,0,0,0,0,0,0.00,0.0,0,0,0,0,0.00,0.00,0,0,0.0,"
-                            ",,,,,,0,0,\nTOTAL,1,1,1,0,0,0,0,0,0.00,0.0,0,0,0,0,0.00,0.00,0,0,0.0,"
-                            ",,,,,,,,\n"));
+    CHECK(out.str().ends_with(
+        "\n(unassigned),1,0,1,1,0,0,0,0,0,0.00,0.0,0,0,0,0,0.00,0.00,0,0,0.0,"
+        ",,,,,,0,0,\nTOTAL,1,0,1,1,0,0,0,0,0,0.00,0.0,0,0,0,0,0.00,0.00,0,0,0.0,"
+        ",,,,,,,,\n"));
 }

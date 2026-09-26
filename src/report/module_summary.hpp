@@ -22,7 +22,8 @@ namespace tezcatl::report {
 /// the product's. The include figures are the module graph's.
 struct ModuleRow {
     std::string module;
-    std::size_t files = 0; ///< source files, production and test
+    std::size_t files = 0;        ///< source files, production and test
+    std::size_t files_parsed = 0; ///< of which some unit parsed
     metrics::LocCounts production;
     metrics::LocCounts test;
     metrics::Distribution complexity; ///< of production functions
@@ -44,7 +45,7 @@ struct ModuleRow {
 /// project is not part of a module graph.
 [[nodiscard]] ModuleRow summarize_project(const ReportData& data, const FileNaming& naming);
 
-/// module,files,production_physical,production_code,production_comment,
+/// module,files,files_parsed,production_physical,production_code,production_comment,
 /// production_blank,test_physical,test_code,functions,complexity_mean,
 /// complexity_median,complexity_p90,complexity_max,flagged,high,
 /// halstead_volume,halstead_effort,api,documented,documented_percent,

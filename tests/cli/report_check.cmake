@@ -82,17 +82,17 @@ src/platform_win.c,(unassigned),production,no,2,0,1,1
 tests/calc_test.cpp,(unassigned),test,yes,6,1,1,4
 ")
 # TOTAL: complexities 1, 2, 3, 3 (median 2.5); coverage is gcovr's totals.
-expect_file(modules.csv "module,files,production_physical,production_code,production_comment,\
+expect_file(modules.csv "module,files,files_parsed,production_physical,production_code,production_comment,\
 production_blank,test_physical,test_code,functions,complexity_mean,complexity_median,\
 complexity_p90,complexity_max,flagged,high,halstead_volume,halstead_effort,api,documented,\
 documented_percent,coverage_lines,coverage_lines_covered,coverage_branches,\
 coverage_branches_covered,coverage_functions,coverage_functions_covered,fan_in,fan_out,cycle
-(unassigned),2,2,1,1,0,6,4,0,0.00,0.0,0,0,0,0,0.00,0.00,0,0,0.0,0,0,0,0,0,0,0,1,
-calc,2,26,22,0,4,0,0,3,2.33,3.0,3,3,0,0,281.54,3935.33,3,0,0.0,12,9,8,6,4,3,2,0,
-main,1,10,7,2,1,0,0,1,2.00,2.0,2,2,0,0,242.90,2989.53,0,0,0.0,5,5,0,0,1,1,0,1,
-TOTAL,5,38,30,3,5,6,4,4,2.25,2.5,3,3,0,0,524.44,6924.85,3,0,0.0,17,14,8,6,5,4,,,
+(unassigned),2,1,2,1,1,0,6,4,0,0.00,0.0,0,0,0,0,0.00,0.00,0,0,0.0,0,0,0,0,0,0,0,1,
+calc,2,2,26,22,0,4,0,0,3,2.33,3.0,3,3,0,0,281.54,3935.33,3,0,0.0,12,9,8,6,4,3,2,0,
+main,1,1,10,7,2,1,0,0,1,2.00,2.0,2,2,0,0,242.90,2989.53,0,0,0.0,5,5,0,0,1,1,0,1,
+TOTAL,5,4,38,30,3,5,6,4,4,2.25,2.5,3,3,0,0,524.44,6924.85,3,0,0.0,17,14,8,6,5,4,,,
 ")
-expect_contains(report.md "| `calc` | 22 | 0 | 3 | 2.33 | 3 | 0 | 0.0% | 75.0% | no |\n")
+expect_contains(report.md "| `calc` | 2 (2) | 22 | 0 | 3 | 2.33 | 3 | 0 | 0.0% | 75.0% | no |\n")
 expect_contains(report.md "| **Total** | 82.4% (14/17) | 75.0% (6/8) | 80.0% (4/5) |\n")
 expect_contains(report.md "3 translation units parsed, 0 with errors. 4 of the 5 source files")
 expect_valid_json()

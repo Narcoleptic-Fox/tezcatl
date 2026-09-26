@@ -30,6 +30,7 @@ std::map<std::string, Accumulator> accumulate(const ReportData& data, const File
     for (const FileLines& file : data.files) {
         ModuleRow& row = result[key_of(file.file)].row;
         ++row.files;
+        row.files_parsed += file.parsed ? 1 : 0;
         (naming.is_test(file.file) ? row.test : row.production) += file.counts;
     }
     for (const parse::FunctionInfo& function : data.functions) {
@@ -69,11 +70,11 @@ std::string optional_number(const std::optional<std::size_t>& value) {
 
 void write_row(std::ostream& out, const ModuleRow& row, bool with_includes) {
     const metrics::Distribution& c = row.complexity;
-    out << csv_field(row.module) << ',' << row.files << ',' << row.production.physical << ','
-        << row.production.code << ',' << row.production.comment << ',' << row.production.blank
-        << ',' << row.test.physical << ',' << row.test.code << ',' << c.count << ','
-        << std::format("{:.2f},{:.1f}", c.mean, c.median) << ',' << c.p90 << ',' << c.max << ','
-        << c.flagged << ',' << c.high << ','
+    out << csv_field(row.module) << ',' << row.files << ',' << row.files_parsed << ','
+        << row.production.physical << ',' << row.production.code << ',' << row.production.comment
+        << ',' << row.production.blank << ',' << row.test.physical << ',' << row.test.code << ','
+        << c.count << ',' << std::format("{:.2f},{:.1f}", c.mean, c.median) << ',' << c.p90 << ','
+        << c.max << ',' << c.flagged << ',' << c.high << ','
         << std::format("{:.2f},{:.2f}", row.halstead_volume, row.halstead_effort) << ','
         << row.documentation.entities << ',' << row.documentation.documented << ','
         << std::format("{:.1f}", row.documentation.percent()) << ',';
@@ -128,7 +129,7 @@ ModuleRow summarize_project(const ReportData& data, const FileNaming& naming) {
 
 void write_module_table(std::ostream& out, const std::vector<ModuleRow>& modules,
                         const ModuleRow& total) {
-    out << "module,files,production_physical,production_code,production_comment,"
+    out << "module,files,files_parsed,production_physical,production_code,production_comment,"
            "production_blank,test_physical,test_code,functions,complexity_mean,"
            "complexity_median,complexity_p90,complexity_max,flagged,high,halstead_volume,"
            "halstead_effort,api,documented,documented_percent,coverage_lines,"

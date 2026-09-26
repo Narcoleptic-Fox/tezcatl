@@ -33,6 +33,7 @@ json module_row(const ModuleRow& row, bool with_includes) {
     json result = {
         {"module", row.module},
         {"files", row.files},
+        {"files_parsed", row.files_parsed},
         {"lines", {{"production", lines(row.production)}, {"test", lines(row.test)}}},
         {"complexity",
          {{"functions", c.count},
