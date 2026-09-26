@@ -182,6 +182,34 @@ The no-op control stayed green in all three runs.
 | 118 | a JSON field renamed (src/report/json_report.cpp) | both schema tests, `cli.report` |
 | 119 | the schema accepts unknown fields (docs/report.schema.json) | *the schema rejects what the report must not contain* |
 | 120 | the JSON totals carry include figures | *the JSON report carries the sample's figures* |
+| 121 | a build directory equal to or above the root excluded; one inside it not excluded (src/cli/project.cpp) | *an in-source build excludes nothing*; *a build directory inside the root is not the project* |
+| 122 | Fortran and other non-C entries parsed | `cli.functions.skips_other_languages` |
+| 123 | a function compiled twice merged with an unstable sort; or keeping the last (src/parse/merge.hpp) | *of repeats at one location, the first seen is kept* (1,000 elements: below 16 both standard libraries sort stably by accident) |
+| 124 | test files' coverage counted in module and project totals (src/report/module_summary.cpp) | *a test file's own coverage is not the module's* |
+| 125 | units under the build directory parsed; not reported (src/cli/project.cpp) | `cli.functions.skips_build_directory_units` and `_exit` (the dependency source does not compile) |
+
+### Hardening: parallel parsing and speed, all confirmed 2026-09-25 on MSVC unless noted
+
+| # | Sabotage | Caught by |
+|---|---|---|
+| 126 | results filed in the order units finish, not database order (src/cli/collect.cpp) | `cli.functions.first_configuration_on_threads`: the first unit is slow to parse, so on two threads it finishes last |
+| 127 | per-unit results joined in reverse | the same |
+| 128 | parse errors of a unit not written | `cli.functions.parse_error_reported` |
+| 129 | an exception on a worker thread swallowed (src/cli/project.cpp) | *an exception on a parsing thread reaches the caller* |
+| 130 | a unit visited twice | *every unit is visited once, whatever the number of threads* |
+| 131 | the work counter a plain integer, on cortex under linux-tsan | ThreadSanitizer, in all three threaded tests: the suppression for libLLVM's statistic registration does not hide Tezcatl's own state |
+| 132 | the sibling index never finds a declaration between comment and declaration (src/parse/api.cpp) | the docs fixture test, `cli.docs.summary`, `cli.docs.declarations` |
+| 133 | a struct inside a typedef not recognised | the docs fixture test, `cli.docs.summary` |
+
+Performance changes are checked by output, not only by tests: each was run on Earthworm at 1 and
+16 threads and all twelve report files compared byte for byte with the run before it.
+
+**Sabotages that survive, and why:**
+
+| Sabotage | Why it survives |
+|---|---|
+| the sibling index ignores which file a declaration is in | unreachable: asked about a declaration's own comment, the search stops at the declaration itself, in the same file, before it could reach another file. The check stays for any other caller |
+| the sibling index left unsorted | binary search on the fixtures' few declarations, visited nearly in order, happens to answer correctly. Not caught; the sort is upper_bound's precondition |
 
 **Control:** a sabotage that only adds a comment must leave every test green, and does. The
 harness deletes the sabotaged file's object before building and refuses a result if it was not
