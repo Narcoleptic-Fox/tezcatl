@@ -40,12 +40,15 @@ std::vector<OffsetRange> nested_functions(CXCursor function) {
     return nested;
 }
 
-// The regions of the function's file that the preprocessor skipped because
-// an #if, #ifdef or #elif condition was false.
+// The regions inside the function that the preprocessor skipped because an
+// #if, #ifdef or #elif condition was false. libclang lists every skipped
+// region of the file; only those overlapping the function can hold its
+// tokens, and keeping the rest made every token scan the whole file's list
+// (97% of a run on SQLite's amalgamation, with thousands of #if blocks).
 std::vector<OffsetRange> skipped_regions(CXTranslationUnit unit, CXCursor function) {
+    const CXSourceRange extent = clang_getCursorExtent(function);
     CXFile file = nullptr;
-    clang_getFileLocation(clang_getRangeStart(clang_getCursorExtent(function)), &file, nullptr,
-                          nullptr, nullptr);
+    clang_getFileLocation(clang_getRangeStart(extent), &file, nullptr, nullptr, nullptr);
     if (file == nullptr) {
         return {};
     }
@@ -53,10 +56,15 @@ std::vector<OffsetRange> skipped_regions(CXTranslationUnit unit, CXCursor functi
     if (!list) {
         return {};
     }
+    const OffsetRange body{.begin = file_offset(clang_getRangeStart(extent)),
+                           .end = file_offset(clang_getRangeEnd(extent))};
     std::vector<OffsetRange> skipped;
     for (const CXSourceRange& range : std::span{list->ranges, list->count}) {
-        skipped.push_back({.begin = file_offset(clang_getRangeStart(range)),
-                           .end = file_offset(clang_getRangeEnd(range))});
+        const OffsetRange region{.begin = file_offset(clang_getRangeStart(range)),
+                                 .end = file_offset(clang_getRangeEnd(range))};
+        if (region.begin < body.end && body.begin < region.end) {
+            skipped.push_back(region);
+        }
     }
     return skipped;
 }
