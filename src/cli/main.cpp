@@ -38,7 +38,8 @@ tezcatl::cli::ProjectOptions default_project_options() {
             .resource_directory = tezcatl::parse::default_resource_directory(),
             .module_map = {},
             .test_globs = {},
-            .allow_parse_errors = false};
+            .allow_parse_errors = false,
+            .jobs = 0};
 }
 
 // The options of every command that parses a project with libclang.
@@ -59,6 +60,10 @@ void add_project_options(CLI::App& command, tezcatl::cli::ProjectOptions& option
         ->capture_default_str();
     command.add_flag("--allow-parse-errors", options.allow_parse_errors,
                      "Exit 0 even if some translation units failed to parse");
+    command
+        .add_option("-j,--jobs", options.jobs,
+                    "Parsing threads (default 0: one per hardware thread)")
+        ->capture_default_str();
 }
 
 void add_threshold_options(CLI::App& command, tezcatl::metrics::Thresholds& thresholds) {

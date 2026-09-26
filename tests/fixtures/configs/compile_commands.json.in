@@ -1,0 +1,12 @@
+[
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["gcc", "-DFIRST", "-DHEAVY", "-I@HEAVY_DIR@", "-c", "config.c"],
+    "file": "config.c"
+  },
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["gcc", "-c", "config.c"],
+    "file": "config.c"
+  }
+]

@@ -1,0 +1,9 @@
+# ThreadSanitizer suppressions for the linux-tsan preset.
+#
+# LLVM registers each statistic lazily, the first time it is used, behind a
+# lock and an atomic "registered" flag. libLLVM is not built with TSan, so the
+# flag's atomic accesses are invisible and two parser threads registering at
+# once look like a race on the statistic. Both stacks are entirely inside
+# libLLVM; Tezcatl's code appears only as the creator of the thread. Scoped to
+# that one function, so a race in Tezcatl's own state is still reported.
+race:llvm::TrackingStatistic::RegisterStatistic

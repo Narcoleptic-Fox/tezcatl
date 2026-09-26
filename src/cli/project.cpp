@@ -4,7 +4,16 @@
 #include "scan/paths.hpp"
 #include "scan/source_files.hpp"
 
+#include <algorithm>
+#include <atomic>
+#include <cstddef>
+#include <exception>
 #include <ostream>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 namespace tezcatl::cli {
 
@@ -25,6 +34,15 @@ void report_errors(const parse::ParsedUnit& parsed, std::ostream& err) {
         }
         err << "error: " << error.message << '\n';
     }
+}
+
+// Threads for `jobs`: as asked, or one per hardware thread. The standard
+// allows hardware_concurrency() to return 0 when it cannot tell.
+std::size_t thread_count(unsigned jobs) {
+    if (jobs > 0) {
+        return jobs;
+    }
+    return std::max(1U, std::thread::hardware_concurrency());
 }
 
 } // namespace
@@ -52,30 +70,76 @@ Project::Project(const ProjectOptions& options)
     }
 }
 
-ScanTotals Project::scan(const std::function<void(const parse::ParsedUnit&)>& visit,
-                         std::ostream& err) const {
-    const parse::Parser parser{options_.resource_directory};
-    ScanTotals totals;
-    for (const parse::CompileCommand& command : parse::load_compilation_database(build_)) {
+ScanPlan Project::plan() const {
+    ScanPlan plan;
+    for (parse::CompileCommand& command : parse::load_compilation_database(build_)) {
         if (!scan::is_source_file(command.file)) {
-            ++totals.skipped;
+            ++plan.skipped;
             continue;
         }
         // Its functions, declarations and includes would all be filtered out:
         // parsing it would only cost time (half of a run on Tezcatl itself).
         if (!excluded_.empty() && scan::is_within(command.file, excluded_)) {
-            ++totals.in_build_directory;
+            ++plan.in_build_directory;
             continue;
         }
-        const parse::ParsedUnit parsed = parser.parse(command);
-        ++totals.units;
-        if (!parsed.errors.empty()) {
-            ++totals.units_with_errors;
-            report_errors(parsed, err);
+        plan.units.push_back(std::move(command));
+    }
+    return plan;
+}
+
+ScanTotals Project::scan(const ScanPlan& scan_plan,
+                         const std::function<void(std::size_t, const parse::ParsedUnit&)>& visit,
+                         std::ostream& err) const {
+    const std::size_t count = scan_plan.units.size();
+    // Per unit, written only by the thread that parsed it.
+    std::vector<std::string> errors(count);
+    std::vector<unsigned char> failed(count, 0); // not vector<bool>: its elements share bytes
+    std::atomic<std::size_t> next{0};
+
+    const std::size_t threads =
+        std::max<std::size_t>(1, std::min(count, thread_count(options_.jobs)));
+    std::vector<std::exception_ptr> exceptions(threads);
+    const auto work = [&](std::size_t worker) {
+        try {
+            const parse::Parser parser{options_.resource_directory};
+            for (std::size_t unit = next++; unit < count; unit = next++) {
+                const parse::ParsedUnit parsed = parser.parse(scan_plan.units.at(unit));
+                if (!parsed.errors.empty()) {
+                    failed.at(unit) = 1;
+                    std::ostringstream text;
+                    report_errors(parsed, text);
+                    errors.at(unit) = std::move(text).str();
+                }
+                if (parsed.unit) {
+                    visit(unit, parsed);
+                }
+            }
+        } catch (...) {
+            exceptions.at(worker) = std::current_exception();
+            next = count; // the others stop after their current unit
         }
-        if (parsed.unit) {
-            visit(parsed);
+    };
+    {
+        std::vector<std::jthread> pool;
+        pool.reserve(threads);
+        for (std::size_t worker = 0; worker < threads; ++worker) {
+            pool.emplace_back(work, worker);
         }
+    } // joined here
+    for (const std::exception_ptr& exception : exceptions) {
+        if (exception) {
+            std::rethrow_exception(exception);
+        }
+    }
+
+    ScanTotals totals{.units = count,
+                      .units_with_errors = 0,
+                      .skipped = scan_plan.skipped,
+                      .in_build_directory = scan_plan.in_build_directory};
+    for (std::size_t unit = 0; unit < count; ++unit) {
+        totals.units_with_errors += failed.at(unit);
+        err << errors.at(unit);
     }
     return totals;
 }

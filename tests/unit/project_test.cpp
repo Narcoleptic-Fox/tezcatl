@@ -1,8 +1,15 @@
 #include "cli/project.hpp"
+#include "parse/translation_unit.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers.hpp>
 
+#include <atomic>
+#include <cstddef>
 #include <filesystem>
+#include <sstream>
+#include <stdexcept>
+#include <vector>
 
 namespace fs = std::filesystem;
 using tezcatl::cli::Project;
@@ -10,13 +17,20 @@ using tezcatl::cli::ProjectOptions;
 
 namespace {
 
-ProjectOptions options(const fs::path& root, const fs::path& build) {
+ProjectOptions options(const fs::path& root, const fs::path& build, unsigned jobs = 1) {
     return {.build_directory = build,
             .root = root,
-            .resource_directory = {},
+            .resource_directory = tezcatl::parse::default_resource_directory(),
             .module_map = {},
             .test_globs = {},
-            .allow_parse_errors = false};
+            .allow_parse_errors = false,
+            .jobs = jobs};
+}
+
+// The coverage fixture's database: three units.
+Project coverage_project(unsigned jobs) {
+    return Project{options(fs::path{TEZCATL_FIXTURES_DIR} / "coverage",
+                           fs::path{TEZCATL_FIXTURE_DBS} / "coverage", jobs)};
 }
 
 } // namespace
@@ -37,4 +51,38 @@ TEST_CASE("an in-source build excludes nothing", "[project]") {
     CHECK(at_root.in_project()(root / "src/a.c"));
     const Project above_root{options(root / "src", root)};
     CHECK(above_root.in_project()(root / "src/a.c"));
+}
+
+TEST_CASE("every unit is visited once, whatever the number of threads", "[project]") {
+    constexpr unsigned threads = 4;
+    const Project project = coverage_project(threads);
+    const tezcatl::cli::ScanPlan plan = project.plan();
+    REQUIRE(plan.units.size() == 3);
+    std::vector<std::atomic<int>> visits(plan.units.size());
+    std::ostringstream err;
+    const tezcatl::cli::ScanTotals totals = project.scan(
+        plan, [&](std::size_t unit, const tezcatl::parse::ParsedUnit&) { ++visits.at(unit); }, err);
+    CHECK(totals.units == 3);
+    CHECK(totals.units_with_errors == 0);
+    for (const std::atomic<int>& count : visits) {
+        CHECK(count.load() == 1);
+    }
+}
+
+TEST_CASE("an exception on a parsing thread reaches the caller", "[project]") {
+    // Swallowed, it would leave a unit's results out of an otherwise
+    // complete-looking report.
+    constexpr unsigned threads = 3;
+    const Project project = coverage_project(threads);
+    const tezcatl::cli::ScanPlan plan = project.plan();
+    std::ostringstream err;
+    CHECK_THROWS_WITH(project.scan(
+                          plan,
+                          [](std::size_t unit, const tezcatl::parse::ParsedUnit&) {
+                              if (unit == 1) {
+                                  throw std::runtime_error("unit 1 failed");
+                              }
+                          },
+                          err),
+                      "unit 1 failed");
 }

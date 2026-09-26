@@ -36,6 +36,18 @@ set(FIXTURE_DIR "${TEZCATL_FIXTURE_DBS}/build-inside")
 configure_file("${TEZCATL_FIXTURES_DIR}/build-inside/compile_commands.json.in"
                "${FIXTURE_DIR}/build/compile_commands.json" @ONLY)
 
+# One file compiled two ways, the first way slow to parse (see config.c), so
+# that parsing on two threads finishes the second unit first.
+set(HEAVY_DIR "${TEZCATL_FIXTURE_DBS}/configs-heavy")
+set(heavy_source "")
+foreach(n RANGE 1 20000)
+    string(APPEND heavy_source "static int heavy_${n}(int x) { return x * ${n} + 1; }\n")
+endforeach()
+file(WRITE "${HEAVY_DIR}/heavy.h" "${heavy_source}")
+set(FIXTURE_DIR "${TEZCATL_FIXTURES_DIR}/configs")
+configure_file("${FIXTURE_DIR}/compile_commands.json.in"
+               "${TEZCATL_FIXTURE_DBS}/configs/compile_commands.json" @ONLY)
+
 add_executable(
     tezcatl_tests
     unit/api_test.cpp
@@ -238,6 +250,17 @@ set_tests_properties(
         PASS_REGULAR_EXPRESSION
         "\nanswer\\.c,1,5,function,answer\\(\\),[^\n]*\ntezcatl: parsed 1 translation units, 0 with errors[;] skipped 1 entries that are not C or C\\+\\+[;] 1 functions"
 )
+
+# Parsed on two threads, the plain second unit finishes long before the slow
+# first one; the first compile command must still be the one measured
+# (complexity 3, two ifs), as docs/metrics.md says, whatever finished first.
+add_test(NAME cli.functions.first_configuration_on_threads
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/configs" --root
+                 "${TEZCATL_FIXTURES_DIR}/configs" -j 2)
+set_tests_properties(
+    cli.functions.first_configuration_on_threads
+    PROPERTIES PASS_REGULAR_EXPRESSION
+               "\nconfig\\.c,7,5,function,decide\\(int\\),\\(unassigned\\),3,ok,[^\n]*\ntezcatl: parsed 2 translation units, 0 with errors[;] 1 functions")
 
 # A unit under the build directory inside the root is a dependency, not the
 # project: it is counted and not parsed. Its source does not even compile, so

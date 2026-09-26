@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config/modules.hpp"
+#include "parse/compilation_database.hpp"
 #include "parse/functions.hpp"
 #include "parse/translation_unit.hpp"
 #include "report/naming.hpp"
@@ -24,6 +25,7 @@ struct ProjectOptions {
     std::filesystem::path module_map;         ///< empty: every file is unassigned
     std::vector<std::string> test_globs;      ///< empty: the default test globs
     bool allow_parse_errors = false;
+    unsigned jobs = 0; ///< parsing threads; 0: one per hardware thread
 };
 
 /// Where a command writes: its table to `out` (stdout), and parse errors and
@@ -33,6 +35,14 @@ struct ProjectOptions {
 struct Streams {
     std::reference_wrapper<std::ostream> out;
     std::reference_wrapper<std::ostream> err;
+};
+
+/// The compilation database entries a scan parses, in database order, and
+/// how many it leaves out and why.
+struct ScanPlan {
+    std::vector<parse::CompileCommand> units;
+    std::size_t skipped = 0;            ///< entries for other languages
+    std::size_t in_build_directory = 0; ///< dependency and generated units
 };
 
 /// How many translation units a scan parsed, and how many had errors.
@@ -69,11 +79,20 @@ public:
     /// How files are named, and assigned to modules and roles.
     [[nodiscard]] const report::FileNaming& naming() const noexcept { return naming_; }
 
-    /// Parses every C and C++ entry of the compilation database and hands
-    /// each unit that libclang could parse to `visit`. Entries for other
-    /// languages, and units under a build directory inside the root, are
-    /// counted, not parsed. Parse errors are written to `err`.
-    ScanTotals scan(const std::function<void(const parse::ParsedUnit&)>& visit,
+    /// The units to parse: every C and C++ entry of the compilation
+    /// database, except units under a build directory inside the root.
+    [[nodiscard]] ScanPlan plan() const;
+
+    /// Parses the plan's units on several threads, each with its own
+    /// libclang index, and hands each unit libclang could parse to `visit`
+    /// with its position in `scan_plan.units`. `visit` runs on several threads at
+    /// once, never twice for one position: it must write only to state kept
+    /// for that position. Parse errors are written to `err` after all units
+    /// are parsed, in database order, so a run's output does not depend on
+    /// which thread finished first. An exception from any unit is rethrown
+    /// here once every thread has stopped.
+    ScanTotals scan(const ScanPlan& scan_plan,
+                    const std::function<void(std::size_t, const parse::ParsedUnit&)>& visit,
                     std::ostream& err) const;
 
     /// Writes the closing status line, "tezcatl: parsed N translation units,
