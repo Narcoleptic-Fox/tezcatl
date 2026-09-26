@@ -41,7 +41,8 @@
         "coverage",
         "translation_units",
         "units_with_errors",
-        "units_skipped"
+        "units_skipped",
+        "units_in_build_directory"
       ],
       "properties": {
         "root": { "type": "string" },
@@ -49,7 +50,8 @@
         "coverage": { "type": "array", "items": { "type": "string" } },
         "translation_units": { "$ref": "#/definitions/count" },
         "units_with_errors": { "$ref": "#/definitions/count" },
-        "units_skipped": { "$ref": "#/definitions/count" }
+        "units_skipped": { "$ref": "#/definitions/count" },
+        "units_in_build_directory": { "$ref": "#/definitions/count" }
       }
     },
     "settings": {

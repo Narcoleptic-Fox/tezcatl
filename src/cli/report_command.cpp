@@ -87,19 +87,21 @@ int run_report(const ReportOptions& options, std::ostream& err) {
     report::IncludeGraph includes =
         report::build_include_graph(found.includes, found.sources, naming);
     std::vector<report::FileLines> files = count_project_lines(project, includes);
-    report::ReportData data{.provenance = {.tool_version = std::string{version},
-                                           .libclang_version = parse::libclang_version(),
-                                           .compilation_database = options.project.build_directory,
-                                           .coverage_inputs = options.coverage_inputs,
-                                           .translation_units = found.totals.units,
-                                           .units_with_errors = found.totals.units_with_errors,
-                                           .units_skipped = found.totals.skipped},
-                            .thresholds = options.thresholds,
-                            .files = std::move(files),
-                            .functions = std::move(found.functions),
-                            .api = std::move(found.api),
-                            .includes = std::move(includes),
-                            .coverage = std::move(coverage)};
+    report::ReportData data{
+        .provenance = {.tool_version = std::string{version},
+                       .libclang_version = parse::libclang_version(),
+                       .compilation_database = options.project.build_directory,
+                       .coverage_inputs = options.coverage_inputs,
+                       .translation_units = found.totals.units,
+                       .units_with_errors = found.totals.units_with_errors,
+                       .units_skipped = found.totals.skipped,
+                       .units_in_build_directory = found.totals.in_build_directory},
+        .thresholds = options.thresholds,
+        .files = std::move(files),
+        .functions = std::move(found.functions),
+        .api = std::move(found.api),
+        .includes = std::move(includes),
+        .coverage = std::move(coverage)};
 
     std::vector<Output> outputs{
         {.name = "report.md",

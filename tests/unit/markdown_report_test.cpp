@@ -114,6 +114,10 @@ TEST_CASE("skipped database entries are stated at the top", "[report]") {
     CHECK_THAT(markdown(data),
                ContainsSubstring("0 with errors. 120 database entries for other languages (such "
                                  "as Fortran) were not parsed."));
+    data.provenance.units_in_build_directory = 90;
+    CHECK_THAT(markdown(data), ContainsSubstring("were not parsed. 90 units under the build "
+                                                 "directory (fetched dependencies, generated "
+                                                 "code) were not parsed."));
 }
 
 TEST_CASE("parse errors are stated at the top", "[report]") {

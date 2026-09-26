@@ -24,7 +24,8 @@ struct Provenance {
     std::vector<std::filesystem::path> coverage_inputs;
     std::size_t translation_units = 0;
     std::size_t units_with_errors = 0;
-    std::size_t units_skipped = 0; ///< database entries not in C or C++
+    std::size_t units_skipped = 0;            ///< database entries not in C or C++
+    std::size_t units_in_build_directory = 0; ///< dependency and generated units, not parsed
 };
 
 /// Everything a report says about a project.

@@ -61,6 +61,12 @@ ScanTotals Project::scan(const std::function<void(const parse::ParsedUnit&)>& vi
             ++totals.skipped;
             continue;
         }
+        // Its functions, declarations and includes would all be filtered out:
+        // parsing it would only cost time (half of a run on Tezcatl itself).
+        if (!excluded_.empty() && scan::is_within(command.file, excluded_)) {
+            ++totals.in_build_directory;
+            continue;
+        }
         const parse::ParsedUnit parsed = parser.parse(command);
         ++totals.units;
         if (!parsed.errors.empty()) {
@@ -79,6 +85,9 @@ int Project::finish(const ScanTotals& totals, std::string_view detail, std::ostr
         << " with errors; ";
     if (totals.skipped > 0) {
         err << "skipped " << totals.skipped << " entries that are not C or C++; ";
+    }
+    if (totals.in_build_directory > 0) {
+        err << "skipped " << totals.in_build_directory << " units under the build directory; ";
     }
     err << detail << '\n';
     return (totals.units_with_errors > 0 && !options_.allow_parse_errors) ? 1 : 0;

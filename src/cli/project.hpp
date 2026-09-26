@@ -42,6 +42,10 @@ struct ScanTotals {
     /// Database entries for other languages (Fortran, assembly), which a
     /// database made by intercepting a build records alongside C and C++.
     std::size_t skipped = 0;
+    /// Units whose main file is under the build directory inside the root:
+    /// fetched dependencies and generated code. Nothing in them is the
+    /// project's, so they are not parsed at all.
+    std::size_t in_build_directory = 0;
 };
 
 /// A project resolved from its options: absolute directories, the filter
@@ -67,13 +71,15 @@ public:
 
     /// Parses every C and C++ entry of the compilation database and hands
     /// each unit that libclang could parse to `visit`. Entries for other
-    /// languages are counted, not parsed. Parse errors are written to `err`.
+    /// languages, and units under a build directory inside the root, are
+    /// counted, not parsed. Parse errors are written to `err`.
     ScanTotals scan(const std::function<void(const parse::ParsedUnit&)>& visit,
                     std::ostream& err) const;
 
     /// Writes the closing status line, "tezcatl: parsed N translation units,
-    /// M with errors; " (then "skipped K entries that are not C or C++; " if
-    /// any were) then `detail`, and returns the process exit code: a
+    /// M with errors; " (then "skipped K entries that are not C or C++; " and
+    /// "skipped B units under the build directory; " if any were) then
+    /// `detail`, and returns the process exit code: a
     /// unit that failed to parse yields incomplete results that would
     /// otherwise pass for complete ones, so it fails the run unless allowed.
     [[nodiscard]] int finish(const ScanTotals& totals, std::string_view detail,

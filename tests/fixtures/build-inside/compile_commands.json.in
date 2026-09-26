@@ -1,0 +1,12 @@
+[
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["gcc", "-c", "src/project.c"],
+    "file": "src/project.c"
+  },
+  {
+    "directory": "@FIXTURE_DIR@",
+    "arguments": ["gcc", "-c", "build/_deps/dependency.c"],
+    "file": "build/_deps/dependency.c"
+  }
+]

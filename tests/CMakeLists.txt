@@ -26,6 +26,15 @@ configure_file("${FIXTURE_DIR}/compile_commands.iprefix.json.in"
 set(FIXTURE_DIR "${TEZCATL_FIXTURES_DIR}/complexity")
 configure_file("${FIXTURE_DIR}/compile_commands.cl.json.in"
                "${TEZCATL_FIXTURE_DBS}/complexity-cl/compile_commands.json" @ONLY)
+# A build directory inside the root, as a CMake project with fetched
+# dependencies has, and as Make with bear has at the top of the tree. Its
+# database must sit in that directory, so the whole fixture is copied into the
+# build tree and the database generated inside the copy.
+file(COPY "${TEZCATL_FIXTURES_DIR}/build-inside/" DESTINATION "${TEZCATL_FIXTURE_DBS}/build-inside"
+     PATTERN "*.in" EXCLUDE)
+set(FIXTURE_DIR "${TEZCATL_FIXTURE_DBS}/build-inside")
+configure_file("${TEZCATL_FIXTURES_DIR}/build-inside/compile_commands.json.in"
+               "${FIXTURE_DIR}/build/compile_commands.json" @ONLY)
 
 add_executable(
     tezcatl_tests
@@ -229,6 +238,23 @@ set_tests_properties(
         PASS_REGULAR_EXPRESSION
         "\nanswer\\.c,1,5,function,answer\\(\\),[^\n]*\ntezcatl: parsed 1 translation units, 0 with errors[;] skipped 1 entries that are not C or C\\+\\+[;] 1 functions"
 )
+
+# A unit under the build directory inside the root is a dependency, not the
+# project: it is counted and not parsed. Its source does not even compile, so
+# parsing it would be a parse error and exit 1.
+add_test(NAME cli.functions.skips_build_directory_units
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/build-inside/build" --root
+                 "${TEZCATL_FIXTURE_DBS}/build-inside")
+set_tests_properties(
+    cli.functions.skips_build_directory_units
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION
+        "\nsrc/project\\.c,1,5,function,project_function\\(int\\),[^\n]*\ntezcatl: parsed 1 translation units, 0 with errors[;] skipped 1 units under the build directory[;] 1 functions"
+)
+# The same run as a whole, by its exit code: a parse error would make it 1.
+add_test(NAME cli.functions.skips_build_directory_units_exit
+         COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/build-inside/build" --root
+                 "${TEZCATL_FIXTURE_DBS}/build-inside")
 
 # Coverage import from tests/fixtures/coverage/data, recorded under
 # /coverage-fixture. Expected values are the tools' own, not Tezcatl's (see the

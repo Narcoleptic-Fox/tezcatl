@@ -67,6 +67,11 @@ void header(std::ostream& out, const ReportData& data, const FileNaming& naming)
         out << " " << p.units_skipped
             << " database entries for other languages (such as Fortran) were not parsed.";
     }
+    if (p.units_in_build_directory > 0) {
+        out << " " << p.units_in_build_directory
+            << " units under the build directory (fetched dependencies, generated code) were not "
+               "parsed.";
+    }
     if (p.units_with_errors > 0) {
         out << " **The figures below are incomplete:** units that fail to parse contribute "
                "only what libclang could recover.";
