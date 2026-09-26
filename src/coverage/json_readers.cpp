@@ -48,6 +48,21 @@ FileRecord& record_for_details(CoverageData& data, const fs::path& file, const f
     return record;
 }
 
+// How a branch is told apart from the line's others when units are merged,
+// as gcovr does. gcov's JSON format 2 (GCC 14) names each branch by the
+// blocks it leaves and enters, so the same branch lines up across the units
+// and template instances that compile the line, and different code compiled
+// on one line (a macro expanded in two functions) stays apart. Format 1
+// (GCC 13 and earlier) has no block ids, and only the branch's position on
+// the line is left.
+std::string branch_id(const json& branch, std::size_t index_on_line) {
+    if (branch.contains("source_block_id") && branch.contains("destination_block_id")) {
+        return "block " + std::to_string(branch.at("source_block_id").get<std::uint64_t>()) + '>' +
+               std::to_string(branch.at("destination_block_id").get<std::uint64_t>());
+    }
+    return std::to_string(index_on_line);
+}
+
 unsigned line_number(const json& value, const fs::path& source) {
     const auto line = value.get<std::uint64_t>();
     if (line == 0 || line > std::numeric_limits<unsigned>::max()) {
@@ -71,11 +86,9 @@ void read_gcov_document(const json& document, const fs::path& source, CoverageDa
         for (const json& line : file.at("lines")) {
             const unsigned number = line_number(line.at("line_number"), source);
             record.add_line(number, line.at("count").get<std::uint64_t>());
-            // A branch is identified by its position among the line's
-            // branches, so the instances of a template line up.
-            std::size_t index = 0;
+            std::size_t index_on_line = 0;
             for (const json& branch : line.value("branches", json::array())) {
-                record.add_branch(number, std::to_string(index++),
+                record.add_branch(number, branch_id(branch, index_on_line++),
                                   branch.at("count").get<std::uint64_t>());
             }
         }

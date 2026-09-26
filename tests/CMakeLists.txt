@@ -280,6 +280,20 @@ add_test(NAME cli.functions.skips_build_directory_units_exit
          COMMAND tezcatl functions -p "${TEZCATL_FIXTURE_DBS}/build-inside/build" --root
                  "${TEZCATL_FIXTURE_DBS}/build-inside")
 
+# One header line compiled differently by two units (tests/fixtures/
+# coverage-blocks): gcov's format 2 names each branch by its blocks, and the
+# figures are gcovr's on the same data. By position the header has 6 branches.
+set(BLOCKS_DIR "${TEZCATL_FIXTURES_DIR}/coverage-blocks")
+add_test(NAME cli.coverage.gcov_block_ids
+         COMMAND tezcatl coverage "${BLOCKS_DIR}/data/blocks.gcov.json" --root "${BLOCKS_DIR}"
+                 --path-map "/blocks-fixture=${BLOCKS_DIR}")
+set_tests_properties(
+    cli.coverage.gcov_block_ids
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION
+        "\nsrc/main\\.c,\\(unassigned\\),2,2,0,0,1,1\nsrc/narrow\\.c,\\(unassigned\\),2,2,0,0,1,1\nsrc/range\\.h,\\(unassigned\\),1,1,8,5,1,1\nsrc/wide\\.c,\\(unassigned\\),2,2,0,0,1,1\n"
+)
+
 # Coverage import from tests/fixtures/coverage/data, recorded under
 # /coverage-fixture. Expected values are the tools' own, not Tezcatl's (see the
 # fixture's README): gcovr --merge-lines per file, and llvm-cov report.
