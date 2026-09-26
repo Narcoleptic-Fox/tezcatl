@@ -2,6 +2,7 @@
 
 #include "parse/clang_string.hpp"
 #include "parse/cursors.hpp"
+#include "parse/position_index.hpp"
 
 #include <algorithm>
 #include <array>
@@ -72,10 +73,6 @@ bool same_file(CXFile a, CXFile b) {
     return a != nullptr && b != nullptr && clang_File_isEqual(a, b) != 0;
 }
 
-// A file's identity as clang_File_isEqual compares it (its unique ID), so
-// that positions can be sorted and searched rather than compared pairwise.
-using FileKey = std::array<unsigned long long, 3>;
-
 std::optional<FileKey> file_key(CXFile file) {
     CXFileUniqueID id{};
     if (file == nullptr || clang_getFileUniqueID(file, &id) != 0) {
@@ -84,70 +81,31 @@ std::optional<FileKey> file_key(CXFile file) {
     return FileKey{id.data[0], id.data[1], id.data[2]};
 }
 
-// The declarations of one scope, indexed by where they are written. Asking
-// every sibling of every declaration was quadratic in the size of a scope,
-// and a C unit's top level holds every declaration of every header it
-// includes: a third of a run on Earthworm. Built only when a declaration of
-// the project in that scope needs it.
-class SiblingIndex {
-public:
-    explicit SiblingIndex(const std::vector<CXCursor>& siblings) {
-        for (const CXCursor& sibling : siblings) {
-            const CXCursorKind kind = clang_getCursorKind(sibling);
-            if (clang_isDeclaration(kind) != 0) {
-                const FilePoint point = file_point(clang_getCursorLocation(sibling));
-                if (const std::optional<FileKey> key = file_key(point.file)) {
-                    declarations_.emplace_back(*key, point.offset);
-                }
-            }
-            if (kind == CXCursor_TypedefDecl) {
-                const CXSourceRange extent = clang_getCursorExtent(sibling);
-                const FilePoint begin = file_point(clang_getRangeStart(extent));
-                const FilePoint end = file_point(clang_getRangeEnd(extent));
-                if (const std::optional<FileKey> key = file_key(begin.file)) {
-                    typedefs_.push_back({.file = *key, .begin = begin.offset, .end = end.offset});
-                }
+// The positions of a scope's declarations and typedefs, gathered from its
+// cursors. Built only when a declaration of the project in that scope needs
+// it.
+PositionIndex index_siblings(const std::vector<CXCursor>& siblings) {
+    std::vector<PositionIndex::Position> declarations;
+    std::vector<PositionIndex::Extent> typedefs;
+    for (const CXCursor& sibling : siblings) {
+        const CXCursorKind kind = clang_getCursorKind(sibling);
+        if (clang_isDeclaration(kind) != 0) {
+            const FilePoint point = file_point(clang_getCursorLocation(sibling));
+            if (const std::optional<FileKey> key = file_key(point.file)) {
+                declarations.push_back({.file = *key, .offset = point.offset});
             }
         }
-        std::ranges::sort(declarations_);
-        std::ranges::sort(typedefs_);
+        if (kind == CXCursor_TypedefDecl) {
+            const CXSourceRange extent = clang_getCursorExtent(sibling);
+            const FilePoint begin = file_point(clang_getRangeStart(extent));
+            const FilePoint end = file_point(clang_getRangeEnd(extent));
+            if (const std::optional<FileKey> key = file_key(begin.file)) {
+                typedefs.push_back({.file = *key, .begin = begin.offset, .end = end.offset});
+            }
+        }
     }
-
-    /// Offsets strictly between which a declaration is looked for: named, so
-    /// the two cannot be passed the wrong way round.
-    struct Gap {
-        unsigned after = 0;
-        unsigned before = 0;
-    };
-
-    /// Whether a declaration of the scope is written in `file` inside `gap`.
-    /// Asked about a declaration's own comment, the search stops at the
-    /// declaration itself at the latest, so it never runs into the next
-    /// file; the file check keeps the function correct for any other
-    /// question.
-    [[nodiscard]] bool declaration_between(const FileKey& file, Gap gap) const {
-        const auto first = std::ranges::upper_bound(declarations_, std::pair{file, gap.after});
-        return first != declarations_.end() && first->first == file && first->second < gap.before;
-    }
-
-    /// Whether `offset` in `file` lies strictly inside a typedef of the scope.
-    [[nodiscard]] bool inside_typedef(const FileKey& file, unsigned offset) const {
-        return std::ranges::any_of(std::ranges::equal_range(typedefs_, file, {}, &Extent::file),
-                                   [offset](const Extent& extent) {
-                                       return offset > extent.begin && offset < extent.end;
-                                   });
-    }
-
-private:
-    struct Extent {
-        FileKey file{};
-        unsigned begin = 0;
-        unsigned end = 0;
-        friend auto operator<=>(const Extent&, const Extent&) = default;
-    };
-    std::vector<std::pair<FileKey, unsigned>> declarations_;
-    std::vector<Extent> typedefs_;
-};
+    return PositionIndex{std::move(declarations), std::move(typedefs)};
+}
 
 std::vector<CXCursor> children_of(CXCursor scope) {
     std::vector<CXCursor> children;
@@ -249,7 +207,7 @@ DocStyle style_of(std::string_view comment) {
 // the same scope in between. libclang also attaches a comment across
 // anything that is not ; { } # or @, including a macro that declares
 // something, which would document the wrong declaration.
-DocStyle documentation_of(CXCursor cursor, const SiblingIndex& siblings) {
+DocStyle documentation_of(CXCursor cursor, const PositionIndex& siblings) {
     const ClangString raw{clang_Cursor_getRawCommentText(cursor)};
     if (raw.view().empty()) {
         return DocStyle::none;
@@ -286,7 +244,7 @@ struct ApiContext {
 // `siblings`, as in `typedef struct { ... } name_t;`. The typedef is then the
 // type's name, and the API entity; counting the struct too would count one
 // type twice. In C, libclang even gives the unnamed struct the typedef's name.
-bool defined_in_typedef(CXCursor member, const SiblingIndex& siblings) {
+bool defined_in_typedef(CXCursor member, const PositionIndex& siblings) {
     const FilePoint begin = file_point(clang_getRangeStart(clang_getCursorExtent(member)));
     const std::optional<FileKey> file = file_key(begin.file);
     return file.has_value() && siblings.inside_typedef(*file, begin.offset);
@@ -297,16 +255,16 @@ bool defined_in_typedef(CXCursor member, const SiblingIndex& siblings) {
 class LazySiblings {
 public:
     explicit LazySiblings(const std::vector<CXCursor>& siblings) : siblings_(&siblings) {}
-    const SiblingIndex& get() {
+    const PositionIndex& get() {
         if (!index_.has_value()) {
-            index_.emplace(*siblings_);
+            index_.emplace(index_siblings(*siblings_));
         }
         return *index_;
     }
 
 private:
     const std::vector<CXCursor>* siblings_; ///< the scope's members, which outlive this
-    std::optional<SiblingIndex> index_;
+    std::optional<PositionIndex> index_;
 };
 
 void record(const ApiContext& context, CXCursor member, ApiKind kind, LazySiblings& siblings) {

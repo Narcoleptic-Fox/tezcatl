@@ -31,6 +31,7 @@ add_library(
     parse/functions.cpp
     parse/includes.cpp
     parse/libclang_info.cpp
+    parse/position_index.cpp
     parse/tokens.cpp
     parse/translation_unit.cpp
     report/csv.cpp
