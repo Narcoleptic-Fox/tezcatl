@@ -1,14 +1,21 @@
+#include "metrics/summary.hpp"
+#include "parse/api.hpp"
+#include "parse/functions.hpp"
 #include "report/json_report.hpp"
 #include "report_sample.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <nlohmann/json-schema.hpp>
 #include <nlohmann/json.hpp>
+#include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 using nlohmann::json;
 
@@ -90,4 +97,40 @@ TEST_CASE("the JSON report is the same bytes every time", "[report]") {
     tezcatl::report::write_report_json(second, tezcatl::test::sample_report(),
                                        tezcatl::test::sample_naming());
     CHECK(first.str() == second.str());
+}
+
+namespace {
+
+// Every spelling to_string gives an enum, found by walking its values from 0
+// until to_string answers "unknown". A new enumerator is picked up without
+// anyone listing it, which is the point: the schema must be told of it.
+template <typename Enum> std::set<std::string> spellings() {
+    std::set<std::string> result;
+    for (unsigned value = 0; value <= std::numeric_limits<std::uint8_t>::max(); ++value) {
+        const std::string_view spelling = to_string(static_cast<Enum>(value));
+        if (spelling == "unknown") {
+            break;
+        }
+        result.emplace(spelling);
+    }
+    return result;
+}
+
+std::set<std::string> schema_enum(const json& schema, const char* array, const char* field) {
+    const json& values =
+        schema.at("properties").at(array).at("items").at("properties").at(field).at("enum");
+    return {values.begin(), values.end()};
+}
+
+} // namespace
+
+TEST_CASE("the schema's enums are exactly what the code writes", "[report]") {
+    // Two lists of one fact: a kind added to the code and not to the schema
+    // would make every report that uses it fail validation.
+    using namespace tezcatl;
+    const json document = schema();
+    CHECK(schema_enum(document, "functions", "kind") == spellings<parse::FunctionKind>());
+    CHECK(schema_enum(document, "functions", "rating") == spellings<metrics::Rating>());
+    CHECK(schema_enum(document, "api", "kind") == spellings<parse::ApiKind>());
+    CHECK(schema_enum(document, "api", "documentation") == spellings<parse::DocStyle>());
 }
