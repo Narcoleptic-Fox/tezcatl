@@ -1,0 +1,49 @@
+# Earthworm (gitlab.com/seismic-software/earthworm) by the categories of its
+# source tree. The first matching rule wins, so specific rules come first.
+
+# Libraries Earthworm bundles but did not write, identified by their own
+# copyright headers, READMEs and licence files, one module each so their
+# figures are not read as Earthworm's. One module for all of them would
+# join unrelated libraries into one node of the module graph and make
+# cycles that are not there (include/ uses libmseed; FilterPicker's copy
+# uses include/).
+third-party/lib330 = src/libsrc/lib330/**
+third-party/lib660 = src/libsrc/lib660/**
+third-party/q660util = src/libsrc/q660util/**
+third-party/libcrypto = src/libsrc/libcrypto/**
+third-party/libcrypto = include/hmac.h
+third-party/libdali = src/libsrc/libdali/**
+third-party/libgd = src/libsrc/libgd/**
+third-party/libgd = include/gd*.h
+third-party/qlib2 = src/libsrc/qlib2/**
+third-party/sqlite = src/libsrc/util/sqlite3.c
+third-party/sqlite = include/sqlite3.h
+third-party/libmseed = src/libsrc/util/libmseed/**
+third-party/libmseed = include/libmseed.h
+third-party/b64 = src/libsrc/util/signing/**
+third-party/libslink = src/data_exchange/slink2ew/libslink/**
+third-party/mysql-connector = src/archiving/mole/mysql-connector-c-6.0.2/**
+# FilterPicker 5, two copies with their own GPL-2 COPYING. The pick_FP copy
+# was adapted to Earthworm: its sources include ew_bridge.h, which includes
+# earthworm.h.
+third-party/filterpicker = src/eew/pick_ffp/picker/**
+third-party/filterpicker = src/seismic_processing/pick_FP/picker/**
+
+# Earthworm's own shared code.
+include = include/**
+include = include_cpp/**
+include = include_win/**
+libsrc = src/libsrc/**
+
+# The modules, one per category directory under src/.
+archiving = src/archiving/**
+data_exchange = src/data_exchange/**
+data_sources = src/data_sources/**
+diagnostic_tools = src/diagnostic_tools/**
+display = src/display/**
+eew = src/eew/**
+grab_bag = src/grab_bag/**
+html = src/html/**
+reporting = src/reporting/**
+seismic_processing = src/seismic_processing/**
+system_control = src/system_control/**
