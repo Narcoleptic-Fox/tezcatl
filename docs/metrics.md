@@ -325,9 +325,12 @@ counts **once**, with the sum of its hits, and is covered if that sum is above 0
 - A **line** is one source line: a template line run by one instance and not another is covered.
   This is gcovr's `--merge-lines` and lcov's convention. gcovr 8's *default* counts a line once
   per template instance instead, which gives larger totals for the same data.
-- A **branch** is one outcome of a condition, identified by its line and its position among that
-  line's branches, so the instances of a template line up. A branch whose condition never ran
-  (lcov's `-`) is not covered.
+- A **branch** is one outcome of a condition, identified by its line and, as gcovr does, by the
+  blocks it leaves and enters when gcov gives them (JSON format 2, GCC 14 and later): the
+  instances of a template line up, and a line compiled differently in two places (a macro
+  expanded in two functions) keeps its different branches apart. gcov's format 1 (GCC 13 and
+  earlier) has no block ids, so there a branch is identified by its position among the line's
+  branches. A branch whose condition never ran (lcov's `-`) is not covered.
 - A **function** is one name: two instances of a template are two functions, as gcov and gcovr
   count them.
 - llvm-cov measures differently (by regions; a template is one function), so its numbers for the
@@ -346,6 +349,14 @@ branches has neither 0% nor 100% branch coverage.
 (the fixture in `tests/fixtures/coverage`), Tezcatl reproduces gcovr `--merge-lines` exactly from
 both the gcov JSON and the lcov file (17 lines, 14 covered; 8 branches, 6; 5 functions, 4, and
 the same per file), and `llvm-cov report` from the llvm-cov JSON (24, 18; 10, 6; 4, 3).
+
+**On real projects.** libmseed built with gcc 14, its tests run, gcov's JSON imported: lines,
+branches and functions equal gcovr's in all 42 files. Built with gcc 13, lines still agree in every
+file, but branches and functions differ in 12: gcovr reads gcc 13 through gcov's text output with
+`--all-blocks`, which carries block ids that gcc 13's JSON does not, and where two functions start
+on one line (a test macro that defines a function and its registration) gcovr cannot tell them
+apart and leaves both out. Use gcc 14 or later when branch figures must match gcovr's. Tezcatl's
+own coverage, from gcc 13, equals gcovr's in all 85 of its files.
 
 ## Include dependencies
 

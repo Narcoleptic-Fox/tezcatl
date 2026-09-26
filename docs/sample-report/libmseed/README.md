@@ -52,9 +52,16 @@ Where they differ, the cause was traced to the gcov data:
   gcov reports such a line once per unit, with the branches of whatever that unit compiled there,
   and different units compile different code on it (2 branches in one, 40 in another). Tezcatl
   pairs the branches by their position on the line; gcovr keeps the instances apart. gcovr's is
-  the more precise count, and matching it is recorded as follow-up work.
+  the more precise count.
 
 Line coverage, the figure a baseline leads with, agrees exactly.
+
+**With gcc 14, everything agrees.** Both differences come from gcc 13's JSON, which has no block
+ids; gcovr reads gcc 13 through gcov's text output instead, which does. gcc 14's JSON (format 2)
+carries them, and Tezcatl keys branches by them since `b053c62`. Built again with gcc 14.2 and
+compared with gcovr 8.6 reading the same run, lines (15,976, 8,653 covered), branches (33,427,
+6,006) and functions (539, 409) are equal in all 42 files. The report above is still the gcc 13
+run; use gcc 14 or later where branch figures must match gcovr's.
 
 ## Reading it
 

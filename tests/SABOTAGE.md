@@ -204,16 +204,21 @@ The no-op control stayed green in all three runs.
 | 134 | the code renames a function kind; the schema drops one (src/parse/functions.cpp, docs/report.schema.json) | *the schema's enums are exactly what the code writes*, which walks each enum until `to_string` says "unknown", so no third list exists to forget |
 | 135 | `--exclude` globs never match (src/cli/project.cpp) | *files matching an exclude glob are not the project*, `cli.report` |
 | 136 | `--exclude` bound to the test globs instead (src/cli/main.cpp) | `cli.report` |
+| 137 | the declaration index left unsorted (src/parse/position_index.cpp) | *a declaration strictly between two offsets of its file is found*, on positions given out of order. It survived at fixture sizes until the index became a class tested on its own |
+| 138 | the typedef index left unsorted | *a position strictly inside a typedef of its file*, the docs fixture test, `cli.docs.summary` |
+| 139 | the index ignores which file a declaration is in | *another file's declarations are never between*. Unreachable through api.cpp (the search stops at the declaration itself); reachable, and caught, on the class |
+| 140 | a typedef's own first byte counted as inside it | *a position strictly inside a typedef of its file* |
+| 141 | gcov format 2 branches keyed by position, not by their blocks (src/coverage/json_readers.cpp) | `cli.coverage.gcov_block_ids` (one line compiled two ways: 8 branches, 6 by position) |
+| 142 | gcov branches keyed by their source block only | `cli.coverage.gcov_block_ids`, the real-data gcov test, `cli.coverage.gcov_summary` |
 
 Performance changes are checked by output, not only by tests: each was run on Earthworm at 1 and
 16 threads and all twelve report files compared byte for byte with the run before it.
 
-**Sabotages that survive, and why:**
-
-| Sabotage | Why it survives |
-|---|---|
-| the sibling index ignores which file a declaration is in | unreachable: asked about a declaration's own comment, the search stops at the declaration itself, in the same file, before it could reach another file. The check stays for any other caller |
-| the sibling index left unsorted | binary search on the fixtures' few declarations, visited nearly in order, happens to answer correctly. Not caught; the sort is upper_bound's precondition |
+**No sabotage survives.** Two used to, both in the documentation check's index while it was
+reachable only through libclang; see rows 137 and 139. One sabotage (the index never finding a
+declaration) dereferences an end iterator: under MSVC's debug runtime that opens a modal assertion
+dialog and the test waits for CTest's timeout, so the harness run was ended by hand. It counts as
+caught, since the test cannot pass.
 
 **Control:** a sabotage that only adds a comment must leave every test green, and does. The
 harness deletes the sabotaged file's object before building and refuses a result if it was not
