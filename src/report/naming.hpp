@@ -4,8 +4,11 @@
 #include "config/modules.hpp"
 
 #include <filesystem>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 
 namespace tezcatl::report {
 
@@ -27,9 +30,26 @@ public:
     [[nodiscard]] const config::FileRoles& roles() const noexcept { return roles_; }
 
 private:
+    /// What every table asks about a file, worked out once per file: a
+    /// report asks for each function, declaration and row, and matching a
+    /// module's globs each time was most of a report's time after parsing.
+    struct Names {
+        std::string relative;
+        std::string module;
+        bool test = false;
+    };
+    /// Shared by copies, which name files identically; guarded, so naming a
+    /// file is safe from any thread.
+    struct Cache {
+        std::mutex mutex;
+        std::unordered_map<std::filesystem::path::string_type, Names> by_path;
+    };
+    [[nodiscard]] const Names& names_of(const std::filesystem::path& file) const;
+
     std::filesystem::path root_;
     config::ModuleMap modules_;
     config::FileRoles roles_;
+    std::shared_ptr<Cache> cache_ = std::make_shared<Cache>();
 };
 
 } // namespace tezcatl::report
