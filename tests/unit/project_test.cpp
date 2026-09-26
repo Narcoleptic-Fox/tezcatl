@@ -23,6 +23,7 @@ ProjectOptions options(const fs::path& root, const fs::path& build, unsigned job
             .resource_directory = tezcatl::parse::default_resource_directory(),
             .module_map = {},
             .test_globs = {},
+            .exclude_globs = {},
             .allow_parse_errors = false,
             .jobs = jobs};
 }
@@ -41,6 +42,19 @@ TEST_CASE("a build directory inside the root is not the project", "[project]") {
     CHECK(project.in_project()(root / "src/a.c"));
     CHECK_FALSE(project.in_project()(root / "build/_deps/lib/b.c"));
     CHECK_FALSE(project.in_project()(fs::absolute("/elsewhere/c.c")));
+}
+
+TEST_CASE("files matching an exclude glob are not the project", "[project]") {
+    const fs::path root = fs::absolute("/p");
+    ProjectOptions with_excludes = options(root, root / "build/release");
+    with_excludes.exclude_globs = {"build/**", "third_party/**"};
+    const Project project{with_excludes};
+    CHECK(project.in_project()(root / "src/a.c"));
+    // Another build tree next to the one given, and vendored code.
+    CHECK_FALSE(project.in_project()(root / "build/debug/_deps/b.c"));
+    CHECK_FALSE(project.in_project()(root / "third_party/zlib/inflate.c"));
+    // A glob matches whole root-relative paths: src/build/ is still the project.
+    CHECK(project.in_project()(root / "src/build/c.c"));
 }
 
 TEST_CASE("an in-source build excludes nothing", "[project]") {

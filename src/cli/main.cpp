@@ -38,6 +38,7 @@ tezcatl::cli::ProjectOptions default_project_options() {
             .resource_directory = tezcatl::parse::default_resource_directory(),
             .module_map = {},
             .test_globs = {},
+            .exclude_globs = {},
             .allow_parse_errors = false,
             .jobs = 0};
 }
@@ -58,6 +59,9 @@ void add_project_options(CLI::App& command, tezcatl::cli::ProjectOptions& option
         .add_option("--resource-dir", options.resource_directory,
                     "clang resource directory (built-in headers such as stddef.h)")
         ->capture_default_str();
+    command.add_option("--exclude", options.exclude_globs,
+                       "Glob (relative to root) of files that are not the project's, such as "
+                       "other build trees or vendored code; repeatable");
     command.add_flag("--allow-parse-errors", options.allow_parse_errors,
                      "Exit 0 even if some translation units failed to parse");
     command

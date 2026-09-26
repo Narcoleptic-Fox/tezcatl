@@ -1,6 +1,7 @@
 #include "cli/project.hpp"
 
 #include "parse/compilation_database.hpp"
+#include "scan/glob.hpp"
 #include "scan/paths.hpp"
 #include "scan/source_files.hpp"
 
@@ -54,7 +55,7 @@ Project::Project(const ProjectOptions& options)
                  : fs::absolute(options.build_directory).lexically_normal()),
       in_project_([this](const fs::path& file) {
           return scan::is_within(file, root_) &&
-                 (excluded_.empty() || !scan::is_within(file, excluded_));
+                 (excluded_.empty() || !scan::is_within(file, excluded_)) && !matches_exclude(file);
       }),
       naming_(options.root,
               options.module_map.empty() ? config::ModuleMap{}
@@ -142,6 +143,16 @@ ScanTotals Project::scan(const ScanPlan& scan_plan,
         err << errors.at(unit);
     }
     return totals;
+}
+
+bool Project::matches_exclude(const fs::path& file) const {
+    if (options_.exclude_globs.empty()) {
+        return false;
+    }
+    const std::string relative = file.lexically_relative(root_).generic_string();
+    return std::ranges::any_of(options_.exclude_globs, [&relative](const std::string& glob) {
+        return scan::glob_match(glob, relative);
+    });
 }
 
 int Project::finish(const ScanTotals& totals, std::string_view detail, std::ostream& err) const {

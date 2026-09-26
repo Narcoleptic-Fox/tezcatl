@@ -122,6 +122,22 @@ endif()
 expect_contains(files.csv "src/main.cpp,main,test,yes,")
 expect_contains(files.csv "tests/calc_test.cpp,(unassigned),production,yes,")
 
+# 3b. --exclude takes files out of the project: the test file's lines, its
+#     main() and its include edge all go, and so does it from files.csv.
+run_report(excluded ${common} --exclude "tests/**")
+if(NOT excluded_code EQUAL 0)
+    fail("report with --exclude exited ${excluded_code}:\n${excluded_err}")
+endif()
+file(READ "${WORK}/files.csv" excluded_files)
+string(FIND "${excluded_files}" "tests/calc_test.cpp" at)
+if(NOT at EQUAL -1)
+    fail("--exclude \"tests/**\" left tests/calc_test.cpp in files.csv:\n${excluded_files}")
+endif()
+string(FIND "${excluded_err}" "4 source files, 4 functions" at)
+if(at EQUAL -1)
+    fail("--exclude: unexpected status:\n${excluded_err}")
+endif()
+
 # 4. A unit that fails to parse: the report is still written and says it is
 #    incomplete, and the exit code is 1 unless parse errors are allowed.
 file(REMOVE_RECURSE "${WORK}")

@@ -24,6 +24,9 @@ struct ProjectOptions {
     std::filesystem::path resource_directory; ///< clang's built-in headers
     std::filesystem::path module_map;         ///< empty: every file is unassigned
     std::vector<std::string> test_globs;      ///< empty: the default test globs
+    /// Root-relative globs of files under the root that are not the
+    /// project's: other build trees, vendored code.
+    std::vector<std::string> exclude_globs;
     bool allow_parse_errors = false;
     unsigned jobs = 0; ///< parsing threads; 0: one per hardware thread
 };
@@ -71,10 +74,10 @@ public:
     Project(Project&&) = delete;
     Project& operator=(Project&&) = delete;
 
-    /// True for files under the root and not under the build directory, if
-    /// that is strictly inside the root (fetched dependencies, generated
-    /// code). A build directory that is the root, or above it, is an
-    /// in-source build and excludes nothing.
+    /// True for files under the root, not under the build directory if that
+    /// is strictly inside the root (fetched dependencies, generated code),
+    /// and matching no exclude glob. A build directory that is the root, or
+    /// above it, is an in-source build and excludes nothing.
     [[nodiscard]] const parse::FileFilter& in_project() const noexcept { return in_project_; }
     /// How files are named, and assigned to modules and roles.
     [[nodiscard]] const report::FileNaming& naming() const noexcept { return naming_; }
@@ -105,6 +108,8 @@ public:
                              std::ostream& err) const;
 
 private:
+    [[nodiscard]] bool matches_exclude(const std::filesystem::path& file) const;
+
     ProjectOptions options_;
     std::filesystem::path root_;
     std::filesystem::path build_;

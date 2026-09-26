@@ -36,6 +36,7 @@ int run_coverage(const CoverageOptions& options, const Streams& streams) {
                            .resource_directory = {},
                            .module_map = options.module_map,
                            .test_globs = {},
+                           .exclude_globs = {},
                            .allow_parse_errors = false,
                            .jobs = 1}};
     const std::optional<report::AttributedCoverage> attributed =
