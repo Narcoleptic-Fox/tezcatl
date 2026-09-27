@@ -8,3 +8,8 @@ CMakeUserPresets.json
 # Working notes. Ignored here explicitly rather than trusting a global rule,
 # because the repository will be public.
 /.local/
+
+# Documentation site (npm run build)
+/node_modules/
+/site/
+/.nav-generated.json

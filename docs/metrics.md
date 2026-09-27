@@ -1,3 +1,9 @@
+---
+title: Metric definitions
+description: Exactly what every figure in a Tezcatl report counts, and where each one stops.
+nav_order: 2
+---
+
 # Metric definitions
 
 Every number Tezcatl reports is defined here precisely enough to be reproduced by hand. Where

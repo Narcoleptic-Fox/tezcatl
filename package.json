@@ -1,0 +1,16 @@
+{
+  "name": "tezcatl-docs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tezcatl's documentation site (docmd). The C++ build does not use this file.",
+  "type": "module",
+  "scripts": {
+    "dev": "docmd dev",
+    "validate": "docmd validate",
+    "build": "docmd build && node scripts/docs/check-nav.mjs",
+    "check-nav": "node scripts/docs/check-nav.mjs"
+  },
+  "devDependencies": {
+    "@docmd/core": "^0.8.13"
+  }
+}

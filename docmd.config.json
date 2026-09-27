@@ -1,0 +1,45 @@
+{
+  "title": "Tezcatl",
+  "url": "https://narcoleptic-fox.github.io/tezcatl",
+  "base": "/tezcatl/",
+  "src": "docs",
+  "out": "site",
+  "autoTitleFromH1": true,
+  "copyCode": true,
+  "pageNavigation": true,
+  "theme": {
+    "appearance": "system",
+    "codeHighlight": true,
+    "colors": {
+      "primary": "#0f766e"
+    }
+  },
+  "layout": {
+    "spa": true,
+    "sidebar": {
+      "collapsible": true
+    },
+    "optionsMenu": {
+      "position": "header",
+      "components": {
+        "search": true,
+        "themeSwitch": true
+      }
+    },
+    "footer": {
+      "style": "minimal",
+      "content": "Tezcatl · MIT licence · Narcoleptic Fox",
+      "branding": true
+    }
+  },
+  "plugins": {
+    "search": {},
+    "mermaid": {},
+    "llms": {},
+    "git": {
+      "repo": "https://github.com/Narcoleptic-Fox/tezcatl",
+      "branch": "main"
+    },
+    "./scripts/docs/nav-gen.mjs": {}
+  }
+}
