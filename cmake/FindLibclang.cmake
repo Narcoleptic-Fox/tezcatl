@@ -2,7 +2,7 @@
 # Libclang::Libclang.
 #
 # Point it at an LLVM install with LLVM_ROOT (CMake or environment variable),
-# e.g. "C:/Program Files/LLVM" on Windows or "/usr/lib/llvm-18" on Ubuntu.
+# e.g. "C:/Program Files/LLVM" on Windows or "/usr/lib/llvm-22" on Ubuntu.
 #
 # Sets Libclang_FOUND, Libclang_INCLUDE_DIR, Libclang_LIBRARY, Libclang_VERSION
 # (the C API version from Index.h, not the LLVM release), Libclang_RESOURCE_DIR

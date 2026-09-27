@@ -84,8 +84,8 @@ tests = tests/**
 Requirements: CMake 3.25 or newer, Ninja, a C++20 compiler, and libclang (the LLVM C API).
 
 ```sh
-# Linux (Ubuntu: apt install libclang-18-dev)
-LLVM_ROOT=/usr/lib/llvm-18 cmake --preset linux-gcc
+# Linux: scripts/linux-deps.sh installs and checks everything, as CI does (Ubuntu 24.04, LLVM 22)
+LLVM_ROOT=/usr/lib/llvm-22 cmake --preset linux-gcc
 cmake --build --preset linux-gcc
 ctest --preset linux-gcc
 ```
