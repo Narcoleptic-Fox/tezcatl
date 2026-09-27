@@ -1,0 +1,54 @@
+name: docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ${{ vars.CI_LINUX_RUNNER || 'ubuntu-24.04' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      # `validate` checks links; `build` alone says nothing about them. It runs
+      # on Linux, where routes are case-sensitive, unlike the Windows machines
+      # the pages are written on.
+      - run: npx docmd validate
+      # docmd build, then the nav check: every built page reachable in the
+      # generated sidebar, and no sidebar entry without a page.
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  # A Pages site is public even when the repository is not, so the site is
+  # published only once the repository itself is public. Until then every
+  # push still validates and builds it.
+  deploy:
+    if: >-
+      github.event.repository.visibility == 'public' &&
+      github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: ${{ vars.CI_LINUX_RUNNER || 'ubuntu-24.04' }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
