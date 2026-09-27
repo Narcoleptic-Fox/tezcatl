@@ -37,7 +37,7 @@ Every figure is checked against an independent tool or a hand count before it is
 
 | Check | Result |
 |---|---|
-| [Earthworm](sample-report/earthworm/index.md), 929 C and C++ units | 0 parse errors; 8.6 s at 16 threads |
+| [Earthworm](sample-report/earthworm/index.md), 929 C and C++ units | 0 parse errors; 3.5 s at 16 threads, 23.7 s on one (Release build) |
 | Complexity against lizard on Earthworm, in the same configuration | 94.1% equal; 99.0% outside SQLite's amalgamation, with the differences explained |
 | Coverage against gcovr: [libmseed](sample-report/libmseed/index.md) built with gcc 14 | lines, branches and functions equal in all 42 files |
 | Coverage against gcovr: Tezcatl itself | equal in all 85 files |

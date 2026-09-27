@@ -10,7 +10,7 @@ coverage import on a real project. Generated 2026-09-25.
 | Tezcatl | commit `966eabf`, libclang 22.1.8 |
 | Build | Ubuntu 24.04.5, gcc 13.3.0, CMake 3.28.3, `--coverage -O0`, its 11 tests passing |
 | Units | 38 parsed, 0 with errors |
-| Run | 8 s wall, 125 MB peak |
+| Run | 0.44 s at 16 threads, 1.9 s on one; 247 MB and 132 MB peak (Release build, AMD Ryzen 7 7840HS; re-timed 2026-09-27 with commit 3a39a64) |
 
 ## Reproduce
 

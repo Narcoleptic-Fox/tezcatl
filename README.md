@@ -18,7 +18,7 @@ into a site with `npm run build` (docmd).
 the report with the run (`scripts/self-report.sh`, artifact `tezcatl-self-report`).
 
 **Sample:** [Earthworm](docs/sample-report/earthworm/index.md), the open-source seismic processing system:
-929 C and C++ units, 0 parse errors, 78 s, with the complexity figures checked against lizard (99.0%
+929 C and C++ units, 0 parse errors, 3.5 s at 16 threads, with the complexity figures checked against lizard (99.0%
 agreement outside SQLite's amalgamation, measured in the same configuration).
 
 ## Usage
@@ -44,7 +44,7 @@ tezcatl report -p build --root . --modules modules.txt --out metrics \
 
 Units are parsed on one thread per core (`-j N` to choose). The result does not depend on the
 number of threads: every figure is identical at `-j 1` and `-j 16`. Earthworm's 929 units take
-8.6 s at 16 threads.
+3.5 s at 16 threads and 23.7 s on one (Release build, AMD Ryzen 7 7840HS).
 
 Test code (by default `**/test/**`, `**/tests/**`, `**/*_test.*`, `**/test_*.*`) counts toward
 test lines only; complexity, Halstead and documentation figures are the product's. A unit that

@@ -9,7 +9,7 @@ A Tezcatl baseline of [Earthworm](https://gitlab.com/seismic-software/earthworm)
 | Tezcatl | commit `27298a4`, libclang 22.1.8 |
 | Build | Ubuntu 24.04.5, gcc and gfortran 13.3.0, `make unix` under bear 3.1.3 |
 | Units | 929 C and C++ translation units parsed, **0 with errors**; 120 Fortran entries skipped |
-| Run | 78 s wall, 438 MB peak, on 16 cores (one thread) |
+| Run | 3.5 s at 16 threads, 23.7 s on one; 782 MB and 536 MB peak (Release build, AMD Ryzen 7 7840HS; re-timed 2026-09-26 with commit 3a39a64, whose output is byte-identical to this report's) |
 
 Files here: [`report.md`](report.md) (the report), [`modules.csv`](https://github.com/Narcoleptic-Fox/tezcatl/blob/main/docs/sample-report/earthworm/modules.csv) (every metric per
 module), the include-graph module tables, and [`modules.txt`](https://github.com/Narcoleptic-Fox/tezcatl/blob/main/docs/sample-report/earthworm/modules.txt), the module map. The
