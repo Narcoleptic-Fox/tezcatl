@@ -11,8 +11,8 @@ It is built to produce the baseline a code review of a C or C++ codebase starts 
 > them all as one baseline. Every definition is in [docs/metrics.md](docs/metrics.md); the JSON
 > report's shape is [docs/report.schema.json](docs/report.schema.json).
 
-**Documentation:** guides, metric definitions and architecture are in [docs/](docs/index.md), built
-into a site with `npm run build` (docmd).
+**Documentation:** [narcoleptic-fox.github.io/tezcatl](https://narcoleptic-fox.github.io/tezcatl/):
+guides, metric definitions and architecture, built from [docs/](docs/index.md) with docmd.
 
 **Self-review:** CI measures Tezcatl itself on every push, with its own test coverage, and keeps
 the report with the run (`scripts/self-report.sh`, artifact `tezcatl-self-report`).
