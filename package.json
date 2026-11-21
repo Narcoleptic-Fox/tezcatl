@@ -7,10 +7,11 @@
   "scripts": {
     "dev": "docmd dev",
     "validate": "docmd validate",
-    "build": "docmd build && node scripts/docs/check-nav.mjs",
-    "check-nav": "node scripts/docs/check-nav.mjs"
+    "build": "docmd build && docmd-kit check-nav",
+    "check-nav": "docmd-kit check-nav"
   },
   "devDependencies": {
-    "@docmd/core": "^0.8.13"
+    "@docmd/core": "^0.8.13",
+    "docmd-kit": "github:Dieshen/docmd-kit#v0.1.3"
   }
 }

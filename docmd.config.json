@@ -40,6 +40,6 @@
       "repo": "https://github.com/Narcoleptic-Fox/tezcatl",
       "branch": "main"
     },
-    "./scripts/docs/nav-gen.mjs": {}
+    "docmd-kit/nav-gen": {}
   }
 }
